@@ -40,7 +40,7 @@ import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material.icons.rounded.Visibility
-import androidx.compose.material.icons.rounded.WbTwilight
+import androidx.compose.material.icons.rounded.Timeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -144,7 +144,7 @@ fun SettingsScreen(vm: AppViewModel) {
                 Group {
                     SettingRow(
                         tr("Styl"),
-                        tr("Lotniczy – taśmy i sztuczny horyzont; prosty – duże cyfry"),
+                        tr("Lotniczy – taśmy i ślad ruchu; prosty – duże cyfry"),
                         Icons.Rounded.Speed,
                         value = if (s.hudStyle == HudStyle.AVIATION) tr("Lotniczy") else tr("Prosty"),
                     ) {
@@ -169,9 +169,9 @@ fun SettingsScreen(vm: AppViewModel) {
                     })
                     ToggleRow(tr("Poświata"), tr("Miękki blask jak na wyświetlaczu przeziernym"), Icons.Rounded.LightMode, s.hudGlow) { v -> vm.updateSettings { it.copy(hudGlow = v) } }
                     ToggleRow(
-                        tr("Sztuczny horyzont"),
-                        tr("Pochylenie i przechylenie telefonu – działa, gdy telefon stoi pionowo w uchwycie"),
-                        Icons.Rounded.WbTwilight,
+                        tr("Ślad ruchu"),
+                        tr("Droga z ostatnich minut i wektor 30 s – kierunek ruchu zawsze w górę"),
+                        Icons.Rounded.Timeline,
                         s.hudHorizon,
                     ) { v -> vm.updateSettings { it.copy(hudHorizon = v) } }
                     ToggleRow(tr("Ekran zawsze włączony"), tr("Na ekranie nagrywania"), Icons.Rounded.Visibility, s.keepScreenOn) { v -> vm.updateSettings { it.copy(keepScreenOn = v) } }

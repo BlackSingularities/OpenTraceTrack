@@ -28,6 +28,8 @@ data class TelemetryState(
     /** Przyspieszenie wzdłużne (g). */
     val g: Double = 0.0,
     val baroAvailable: Boolean = false,
+    /** Ostatnie pozycje (co najmniej 3 m od siebie) – ślad w HUD. */
+    val trail: List<com.blacksingularities.gpxreg.data.LatLon> = emptyList(),
 )
 
 object Telemetry {
@@ -105,6 +107,14 @@ object Telemetry {
             vAccuracy = if (l.hasVerticalAccuracy()) l.verticalAccuracyMeters.toDouble() else null,
             vs = vs,
             g = g,
+            trail = s.trail.let { t ->
+                val last = t.lastOrNull()
+                if (last == null || Geo.distance(last.lat, last.lon, l.latitude, l.longitude) > 3) {
+                    (t + com.blacksingularities.gpxreg.data.LatLon(l.latitude, l.longitude)).takeLast(300)
+                } else {
+                    t
+                }
+            },
         )
     }
 }

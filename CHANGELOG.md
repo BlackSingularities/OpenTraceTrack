@@ -4,6 +4,8 @@
 - Nowa nazwa: OpenTraceTrack (dawniej GPXreg). Trasy, ustawienia i kopie bazy zostają bez zmian.
 - Nowa ikona aplikacji, ikona w powiadomieniach i ekran startowy.
 - Ekran nagrywania: logo w górnym pasku, na tabletach HUD i mapa obok siebie.
+- HUD: zamiast sztucznego horyzontu (zależnego od pochylenia telefonu) ślad ruchu z ostatnich minut – kierunek jazdy w górę, wektor 30 s i pierścienie zasięgu.
+- Taśma kursu nie ucina cyfr przy krawędziach.
 
 ## 1.0.0
 - Pierwsze wydanie OpenTraceTrack.

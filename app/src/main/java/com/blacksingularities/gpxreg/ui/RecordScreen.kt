@@ -162,6 +162,7 @@ fun RecordScreen(vm: AppViewModel) {
         color = Color(settings.hudColor.argb),
         glow = settings.hudGlow,
         horizon = settings.hudHorizon,
+        trail = tel.trail,
         maxSpeed = if (rec.active) rec.total.maxSpeed else 0.0,
         speedAlert = settings.speedAlert,
         clock = clock,

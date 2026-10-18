@@ -23,7 +23,7 @@ Najnowsza wersja jest zawsze w **[Releases → Latest](../../releases/latest)**.
 ### HUD
 | | |
 |---|---|
-| **Styl lotniczy** | Taśma prędkości z wektorem trendu i znacznikiem maksimum, taśma wysokości z prędkością pionową, taśma kursu (z GPS w ruchu, z kompasu w miejscu), sztuczny horyzont z drabinką pochylenia i skalą przechylenia, przeciążenie, stan GPS. |
+| **Styl lotniczy** | Taśma prędkości z wektorem trendu i znacznikiem maksimum, taśma wysokości z prędkością pionową, taśma kursu (z GPS w ruchu, z kompasu w miejscu), ślad ruchu z ostatnich minut (kierunek jazdy w górę) z wektorem 30 s i pierścieniami zasięgu, przeciążenie, stan GPS. |
 | **Styl prosty** | Duże cyfry na łuku prędkości, wysokość, prędkość pionowa i kurs. |
 | **Odbicie na szybie** | Tryb lustrzany – połóż telefon pod szybą samochodu, a HUD odbije się czytelnie. |
 | **Kolory i poświata** | Biel, zielony fosfor, bursztyn, cyjan; miękki blask jak na prawdziwym wyświetlaczu. |
@@ -92,7 +92,7 @@ Wydania podpisuje CI kluczem z sekretów repozytorium (`SIGNING_KEYSTORE_BASE64`
 
 **An aircraft-style HUD speedometer and GPS track recorder for Android.** It records trips split by transport mode and saves them as universal GPX that opens in Strava, Garmin Connect, Komoot, OsmAnd or QGIS.
 
-- **HUD**: aviation style (speed and altitude tapes, heading tape, artificial horizon with pitch ladder and bank scale, vertical speed, G) or simple big digits. Four symbol colours, glow, and a mirror mode for windshield reflection.
+- **HUD**: aviation style (speed and altitude tapes, heading tape, motion trail (track-up) with a 30 s vector and range rings, vertical speed, G) or simple big digits. Four symbol colours, glow, and a mirror mode for windshield reflection.
 - **Recording** in the background with a notification, auto-pause, accuracy filter, barometer, speed warning, and recovery after the system kills the app.
 - **Multiple transport modes in one recording** (14 modes). Switching starts a new section. Speed-based detection can suggest a switch or split automatically, back-dated to the moment the change actually happened.
 - **Track details**: map coloured by mode, statistics, speed/elevation profile linked to the map, section editing (change mode, split, merge, delete), markers, notes.

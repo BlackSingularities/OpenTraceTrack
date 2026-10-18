@@ -48,6 +48,8 @@ data class HudInput(
     val color: Color,
     val glow: Boolean,
     val horizon: Boolean,
+    /** Ostatnie pozycje (od najstarszej) do śladu ruchu. */
+    val trail: List<com.blacksingularities.gpxreg.data.LatLon> = emptyList(),
     /** Prędkość maksymalna nagrania (m/s) – znacznik na taśmie. */
     val maxSpeed: Double,
     /** Próg ostrzeżenia (m/s, 0 = brak). */
@@ -151,8 +153,7 @@ private class HudPainter(val tm: TextMeasurer) {
         speedTape(Rect(m, top, m + tapeW, bottom))
         altTape(Rect(w - m - tapeW, top, w - m, bottom))
         val center = Rect(m + tapeW + 14.dp(), top, w - m - tapeW - 14.dp(), bottom)
-        if (input.horizon && input.att.available) horizon(center) else plainReticle(center)
-        aircraftSymbol(center.center, min(center.width, center.height))
+        if (input.horizon) trailView(center)
         bottomLine(Rect(m, bottom + 22.dp(), w - m, h - 2.dp()))
     }
 
@@ -180,7 +181,7 @@ private class HudPainter(val tm: TextMeasurer) {
                             270 -> "W"
                             else -> "%02d".format(norm / 10)
                         }
-                        if (abs(x - cx) > 66.dp()) text(label, x, baseY - 21.dp(), 13.sp, weight = if (norm % 90 == 0) FontWeight.Black else FontWeight.Bold)
+                        if (abs(x - cx) > 66.dp() && x > r.left + 12.dp() && x < r.right - 12.dp()) text(label, x, baseY - 21.dp(), 13.sp, weight = if (norm % 90 == 0) FontWeight.Black else FontWeight.Bold)
                     }
                     d += 5
                 }
@@ -333,110 +334,74 @@ private class HudPainter(val tm: TextMeasurer) {
         text(value, cx, cy, size, weight = FontWeight.Black)
     }
 
-    private fun DrawScope.horizon(r: Rect) {
-        val att = input.att
-        val cx = r.center.x
-        val cy = r.center.y
-        val pxPerDeg = r.height / 44f
-        val half = r.width / 2
+    /**
+     * Ślad ruchu: przejechana droga z ostatnich minut w układzie „kierunek ruchu w górę”, jak
+     * wyświetlacz nawigacyjny. Pozycja stała w dolnej części, przed nią przerywany wektor –
+     * gdzie będziesz za 30 s przy obecnej prędkości – i pierścienie zasięgu z opisem.
+     */
+    private fun DrawScope.trailView(r: Rect) {
+        val tel = input.tel
+        val me = Offset(r.center.x, r.top + r.height * 0.74f)
+        val radius = min(r.width * 0.5f, (me.y - r.top) * 0.96f)
+        val course = tel.course
+        val rot = Math.toRadians(-(course ?: 0.0))
+        val k = cos(Math.toRadians(tel.lat))
+        // Punkty w metrach względem bieżącej pozycji, obrócone kierunkiem ruchu w górę.
+        val local = input.trail.map { p ->
+            val dx = (p.lon - tel.lon) * 111_320.0 * k
+            val dy = (p.lat - tel.lat) * 110_540.0
+            Offset((dx * cos(rot) - dy * sin(rot)).toFloat(), (dx * sin(rot) + dy * cos(rot)).toFloat())
+        }
+        val ahead = tel.speed * 30
+        val far = max(local.maxOfOrNull { kotlin.math.hypot(it.x.toDouble(), it.y.toDouble()) } ?: 0.0, ahead)
+        val range = listOf(50.0, 100.0, 200.0, 500.0, 1_000.0, 2_000.0, 5_000.0, 10_000.0, 20_000.0, 50_000.0)
+            .firstOrNull { it >= far * 1.05 } ?: 50_000.0
+        val scale = (radius / range).toFloat()
+        fun pt(o: Offset) = Offset(me.x + o.x * scale, me.y - o.y * scale)
+
         clipRect(r.left, r.top, r.right, r.bottom) {
-            rotate(-att.roll, Offset(cx, cy)) {
-                translate(0f, att.pitch * pxPerDeg) {
-                    // Linia horyzontu z przerwą na symbol.
-                    val gap = half * 0.22f
-                    line(Offset(cx - half * 1.6f, cy), Offset(cx - gap, cy), 2.dp())
-                    line(Offset(cx + gap, cy), Offset(cx + half * 1.6f, cy), 2.dp())
-                    // Drabinka pochylenia co 5°, poniżej horyzontu – przerywana (konwencja lotnicza).
-                    for (deg in -60..60 step 5) {
-                        if (deg == 0) continue
-                        val y = cy - deg * pxPerDeg
-                        if (y < r.top - 40.dp() - att.pitch * pxPerDeg || y > r.bottom + 40.dp() - att.pitch * pxPerDeg) continue
-                        val major = deg % 10 == 0
-                        val wing = if (major) half * 0.42f else half * 0.22f
-                        val inner = half * 0.16f
-                        val dash = if (deg < 0) PathEffect.dashPathEffect(floatArrayOf(5.dp(), 4.dp())) else null
-                        val tick = if (deg > 0) 6.dp() else -6.dp()
-                        line(Offset(cx - inner - wing, y), Offset(cx - inner, y), 1.6f.dp(), effect = dash)
-                        line(Offset(cx + inner, y), Offset(cx + inner + wing, y), 1.6f.dp(), effect = dash)
-                        line(Offset(cx - inner - wing, y), Offset(cx - inner - wing, y + tick), 1.6f.dp())
-                        line(Offset(cx + inner + wing, y), Offset(cx + inner + wing, y + tick), 1.6f.dp())
-                        if (major) {
-                            text(abs(deg).toString(), cx - inner - wing - 6.dp(), y, 11.sp, Align.RIGHT)
-                            text(abs(deg).toString(), cx + inner + wing + 6.dp(), y, 11.sp, Align.LEFT)
-                        }
-                    }
+            // Pierścienie zasięgu (pełny i połowa) – łuki przed pozycją.
+            for ((f, dash) in listOf(1f to false, 0.5f to true)) {
+                val rr = radius * f
+                val arc = Path().apply {
+                    addArc(Rect(me.x - rr, me.y - rr, me.x + rr, me.y + rr), 200f, 140f)
+                }
+                if (dash) {
+                    drawPath(arc, c.copy(alpha = 0.45f), style = Stroke(1.2f.dp(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp(), 5.dp()))))
+                } else {
+                    path(arc, 1.4f.dp(), color = c.copy(alpha = 0.7f))
                 }
             }
-        }
-        bankScale(r, att.roll)
-    }
+            text(input.units.fmtDist(range), me.x + radius * 0.94f * cos(Math.toRadians(-20.0)).toFloat() - 4.dp(), me.y - radius * 0.94f * sin(Math.toRadians(20.0)).toFloat() - 10.dp(), 11.sp, Align.RIGHT, color = c.copy(alpha = 0.75f))
+            text(if (course != null) "TRK UP" else "N UP", r.left + 4.dp(), r.top + 10.dp(), 10.sp, Align.LEFT, color = c.copy(alpha = 0.6f))
 
-    /** Skala przechylenia u góry z ruchomym wskaźnikiem. */
-    private fun DrawScope.bankScale(r: Rect, roll: Float) {
-        val cx = r.center.x
-        val radius = min(r.width * 0.46f, r.height * 0.62f)
-        val cy = r.top + radius + 10.dp()
-        for (a in listOf(-60, -45, -30, -20, -10, 0, 10, 20, 30, 45, 60)) {
-            val rad = Math.toRadians(a.toDouble() - 90)
-            val len = when {
-                a == 0 -> 0f
-                abs(a) % 30 == 0 -> 11.dp()
-                else -> 6.dp()
-            }
-            val ox = cx + (cos(rad) * radius).toFloat()
-            val oy = cy + (sin(rad) * radius).toFloat()
-            if (a == 0) {
-                val tri = Path().apply {
-                    moveTo(ox, oy)
-                    lineTo(ox - 6.dp(), oy - 9.dp())
-                    lineTo(ox + 6.dp(), oy - 9.dp())
-                    close()
+            // Ślad – im starszy, tym bledszy.
+            if (local.size > 1) {
+                val n = local.size
+                for (i in 1 until n) {
+                    val alpha = 0.25f + 0.75f * i / n
+                    line(pt(local[i - 1]), pt(local[i]), 2.4f.dp(), color = c.copy(alpha = alpha))
                 }
-                path(tri, 1.5f.dp())
-            } else {
-                val ix = cx + (cos(rad) * (radius - len)).toFloat()
-                val iy = cy + (sin(rad) * (radius - len)).toFloat()
-                line(Offset(ox, oy), Offset(ix, iy), 1.5f.dp())
+            }
+            // Wektor 30 s przed sobą.
+            if (course != null && ahead > 1) {
+                val tip = Offset(me.x, me.y - (ahead * scale).toFloat())
+                line(me, tip, 2.dp(), effect = PathEffect.dashPathEffect(floatArrayOf(7.dp(), 5.dp())))
+                drawCircle(c, 3.dp(), tip)
+                text("30 s", tip.x + 8.dp(), tip.y, 10.sp, Align.LEFT, color = c.copy(alpha = 0.75f))
             }
         }
-        val pr = Math.toRadians(-roll.toDouble().coerceIn(-65.0, 65.0) - 90)
-        val bx = cx + (cos(pr) * (radius - 3.dp())).toFloat()
-        val by = cy + (sin(pr) * (radius - 3.dp())).toFloat()
-        rotate(-roll.coerceIn(-65f, 65f), Offset(bx, by)) {
-            val tri = Path().apply {
-                moveTo(bx, by)
-                lineTo(bx - 6.dp(), by + 10.dp())
-                lineTo(bx + 6.dp(), by + 10.dp())
-                close()
-            }
-            path(tri, 1.5f.dp(), fill = c)
+        // Znacznik pozycji – grot skierowany w stronę ruchu.
+        val s = 11.dp()
+        val chevron = Path().apply {
+            moveTo(me.x, me.y - s * 1.3f)
+            lineTo(me.x + s, me.y + s * 0.9f)
+            lineTo(me.x, me.y + s * 0.35f)
+            lineTo(me.x - s, me.y + s * 0.9f)
+            close()
         }
-        if (abs(roll) >= 3) text("%d°".format(abs(roll).roundToInt()), cx, cy - radius + 26.dp(), 11.sp, color = c.copy(alpha = 0.8f))
-    }
-
-    /** Bez czujnika orientacji: sam krzyż celownika i kompas tekstowy. */
-    private fun DrawScope.plainReticle(r: Rect) {
-        val cx = r.center.x
-        val cy = r.center.y
-        val l = min(r.width, r.height) * 0.42f
-        line(Offset(cx - l, cy), Offset(cx - l * 0.35f, cy), 1.5f.dp(), effect = PathEffect.dashPathEffect(floatArrayOf(6.dp(), 6.dp())))
-        line(Offset(cx + l * 0.35f, cy), Offset(cx + l, cy), 1.5f.dp(), effect = PathEffect.dashPathEffect(floatArrayOf(6.dp(), 6.dp())))
-    }
-
-    /** Stały symbol „samolotu” (W) w środku. */
-    private fun DrawScope.aircraftSymbol(center: Offset, space: Float) {
-        val s = (space * 0.11f).coerceIn(14.dp(), 26.dp())
-        val p = Path().apply {
-            moveTo(center.x - s * 2.6f, center.y)
-            lineTo(center.x - s, center.y)
-            lineTo(center.x - s * 0.5f, center.y + s * 0.6f)
-            lineTo(center.x, center.y)
-            lineTo(center.x + s * 0.5f, center.y + s * 0.6f)
-            lineTo(center.x + s, center.y)
-            lineTo(center.x + s * 2.6f, center.y)
-        }
-        path(p, 2.6f.dp())
-        drawCircle(c, 2.5f.dp(), center)
+        path(chevron, 2.dp(), fill = Color.Black.copy(alpha = 0.6f))
+        if (course == null && !tel.hasFix) text("…", me.x, me.y + 26.dp(), 12.sp, color = c.copy(alpha = 0.6f))
     }
 
     private fun DrawScope.bottomLine(r: Rect) {
