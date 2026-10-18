@@ -177,7 +177,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         snack(tr("Zapisano plików: {0}", n))
     }
 
-    fun zipExport(job: ExportJob): File = port.zip(job.files, "GPXreg-export")
+    fun zipExport(job: ExportJob): File = port.zip(job.files, "OpenTraceTrack-export")
 
     fun importGpx(uris: List<Uri>) = io {
         val r = port.importGpx(uris)
@@ -269,7 +269,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
         if (!UpdateManager.canInstall(app)) {
             UpdateManager.openInstallPermissionSettings(app)
-            snack(tr("Zezwól GPXreg na instalowanie aplikacji, potem dotknij „Aktualizuj” ponownie"))
+            snack(tr("Zezwól OpenTraceTrack na instalowanie aplikacji, potem dotknij „Aktualizuj” ponownie"))
             return
         }
         updateJob?.cancel()

@@ -16,8 +16,9 @@ import java.util.Locale
 import java.util.TimeZone
 import javax.xml.parsers.SAXParserFactory
 
-const val REPO_URL = "https://github.com/BlackSingularities/GPXreg"
-private const val NS_GPXREG = "$REPO_URL/gpx/1"
+const val REPO_URL = "https://github.com/BlackSingularities/OpenTraceTrack"
+// Stabilny identyfikator formatu: nie zmieniamy go przy rebrandingu, by stare pliki pozostały zgodne.
+private const val NS_GPXREG = "https://github.com/BlackSingularities/GPXreg/gpx/1"
 
 /** Fragment do zapisu: jeden `<trk>` z typem aktywności i podsumowaniem. */
 data class GpxSegment(
@@ -45,7 +46,7 @@ data class GpxDocument(
  *  - przerwy po pauzach to osobne `<trkseg>`,
  *  - prędkość (m/s) i kurs (°) w standardowym rozszerzeniu Garmin TrackPointExtension v2,
  *  - dokładność, ciśnienie i podsumowania w przestrzeni nazw `gpxreg` – inne programy je pomijają,
- *    a GPXreg odtwarza z nich trasę 1:1 (także identyfikator, więc ponowny import nie dubluje).
+ *    a OpenTraceTrack odtwarza z nich trasę 1:1 (także identyfikator, więc ponowny import nie dubluje).
  */
 object GpxWriter {
     fun write(doc: GpxDocument, out: Writer) {
@@ -64,7 +65,7 @@ object GpxWriter {
         w.open("metadata", 1)
         w.leaf("name", doc.name, 2)
         if (doc.description.isNotBlank()) w.leaf("desc", doc.description, 2)
-        w.raw("    <link href=\"$REPO_URL\"><text>GPXreg</text></link>").nl()
+        w.raw("    <link href=\"$REPO_URL\"><text>OpenTraceTrack</text></link>").nl()
         w.leaf("time", iso(doc.time), 2)
         val keywords = doc.segments.map { it.mode.gpxType }.distinct().joinToString(", ")
         if (keywords.isNotEmpty()) w.leaf("keywords", keywords, 2)
@@ -94,7 +95,7 @@ object GpxWriter {
         for (seg in doc.segments) {
             w.open("trk", 1)
             w.leaf("name", seg.name, 2)
-            w.leaf("src", "GPXreg", 2)
+            w.leaf("src", "OpenTraceTrack", 2)
             w.leaf("number", (seg.index + 1).toString(), 2)
             w.leaf("type", seg.mode.gpxType, 2)
             val s = seg.stats

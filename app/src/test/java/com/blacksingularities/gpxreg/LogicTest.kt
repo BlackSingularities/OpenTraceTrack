@@ -27,9 +27,9 @@ class LogicTest {
     @Test
     fun releasesCollectAllNewerNotes() {
         val json = """[
-          {"tag_name":"v1.3.0","draft":false,"prerelease":true,"body":"beta","assets":[{"name":"GPXreg-1.3.0.apk","browser_download_url":"u3","size":3}]},
-          {"tag_name":"v1.2.0","draft":false,"prerelease":false,"body":"- B\n\n---\nstopka","published_at":"2026-10-02T10:00:00Z","html_url":"p2","assets":[{"name":"GPXreg-1.2.0.apk","browser_download_url":"u2","size":2048}]},
-          {"tag_name":"v1.1.0","draft":false,"prerelease":false,"body":"- A","published_at":"2026-09-01T10:00:00Z","assets":[{"name":"GPXreg-1.1.0.apk","browser_download_url":"u1","size":1}]},
+          {"tag_name":"v1.3.0","draft":false,"prerelease":true,"body":"beta","assets":[{"name":"OpenTraceTrack-1.3.0.apk","browser_download_url":"u3","size":3}]},
+          {"tag_name":"v1.2.0","draft":false,"prerelease":false,"body":"- B\n\n---\nstopka","published_at":"2026-10-02T10:00:00Z","html_url":"p2","assets":[{"name":"OpenTraceTrack-1.2.0.apk","browser_download_url":"u2","size":2048}]},
+          {"tag_name":"v1.1.0","draft":false,"prerelease":false,"body":"- A","published_at":"2026-09-01T10:00:00Z","assets":[{"name":"OpenTraceTrack-1.1.0.apk","browser_download_url":"u1","size":1}]},
           {"tag_name":"v1.0.0","draft":false,"prerelease":false,"body":"stare","assets":[]}
         ]"""
         val info = parseReleases(json, "1.0.0")

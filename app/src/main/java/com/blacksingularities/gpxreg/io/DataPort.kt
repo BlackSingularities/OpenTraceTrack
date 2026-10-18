@@ -68,7 +68,7 @@ class DataPort(private val context: Context, private val db: TrackDb) {
             time = track.startTime,
             segments = segs,
             waypoints = if (segmentIds == null) db.waypoints(trackId) else emptyList(),
-            creator = "GPXreg ${BuildConfig.VERSION_NAME} – $REPO_URL",
+            creator = "OpenTraceTrack ${BuildConfig.VERSION_NAME} – $REPO_URL",
         )
     }
 
@@ -162,7 +162,7 @@ class DataPort(private val context: Context, private val db: TrackDb) {
 
     /**
      * Import plików GPX. Każdy plik to jedna trasa; jego ścieżki `<trk>` stają się fragmentami
-     * z rozpoznanym środkiem transportu. Plik z eksportu GPXreg wraca z tym samym identyfikatorem.
+     * z rozpoznanym środkiem transportu. Plik z eksportu OpenTraceTrack wraca z tym samym identyfikatorem.
      */
     fun importGpx(uris: List<Uri>): ImportResult {
         val ids = ArrayList<Long>()
@@ -214,7 +214,7 @@ class DataPort(private val context: Context, private val db: TrackDb) {
     }.getOrNull() ?: uri.lastPathSegment?.substringAfterLast('/') ?: "track.gpx"
 
     companion object {
-        fun backupName(): String = "GPXreg-" + SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.US).format(Date()) + ".sqlite"
+        fun backupName(): String = "OpenTraceTrack-" + SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.US).format(Date()) + ".sqlite"
 
         /** „2026-10-18_1405_Trasa_do_pracy” – bez znaków, których nie lubią systemy plików. */
         fun baseName(doc: GpxDocument): String {

@@ -1,7 +1,12 @@
 # Zmiany
 
+## 1.0.1
+- Nowa nazwa: OpenTraceTrack (dawniej GPXreg). Trasy, ustawienia i kopie bazy zostają bez zmian.
+- Nowa ikona aplikacji, ikona w powiadomieniach i ekran startowy.
+- Ekran nagrywania: logo w górnym pasku, na tabletach HUD i mapa obok siebie.
+
 ## 1.0.0
-- Pierwsze wydanie GPXreg.
+- Pierwsze wydanie OpenTraceTrack.
 - HUD w stylu lotniczym: taśmy prędkości i wysokości, kurs, sztuczny horyzont z drabinką pochylenia i skalą przechylenia, prędkość pionowa, przeciążenie wzdłużne. Wariant prosty z dużymi cyframi, cztery kolory symboli, poświata i tryb lustrzany do odbicia na szybie.
 - Nagrywanie trasy w tle z powiadomieniem (pauza, znacznik), automatyczna pauza na postojach, filtr dokładności i wznawianie nagrania przerwanego przez system.
 - Zmiana środka transportu w trakcie nagrania (14 rodzajów) tworzy nowy fragment. Podpowiedź albo automatyczny podział po zmianie prędkości – cofnięty do chwili faktycznej przesiadki.

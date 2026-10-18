@@ -13,3 +13,5 @@ build/
 /.claude/
 /signing/
 /.kotlin/
+/.tmp-jdk17/
+/.tmp-jdk17.zip

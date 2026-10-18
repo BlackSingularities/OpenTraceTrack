@@ -171,7 +171,7 @@ fun UpdateSheet(vm: AppViewModel) {
                             UpdateState.Checking -> tr("Sprawdzanie aktualizacji…")
                             UpdateState.UpToDate -> tr("Masz najnowszą wersję")
                             is UpdateState.Failed -> tr("Aktualizacja nie powiodła się")
-                            else -> if (info != null) tr("GPXreg {0}", info.version) else tr("Aktualizacje")
+                            else -> if (info != null) tr("OpenTraceTrack {0}", info.version) else tr("Aktualizacje")
                         },
                         color = Color.White,
                         fontSize = 20.sp,
@@ -262,7 +262,7 @@ fun UpdateSheet(vm: AppViewModel) {
                                     recording -> tr("Trwa nagrywanie – plik możesz pobrać teraz, a zainstalować po zakończeniu trasy.")
                                     UpdateManager.canInstallSilently(context) -> tr("Aktualizacja pobierze się i zainstaluje bez dodatkowych pytań. Trasy i ustawienia zostaną.")
                                     UpdateManager.canInstall(context) -> tr("Android poprosi o potwierdzenie instalacji. Trasy i ustawienia zostaną.")
-                                    else -> tr("Za pierwszym razem Android zapyta o zgodę na instalowanie aplikacji z GPXreg.")
+                                    else -> tr("Za pierwszym razem Android zapyta o zgodę na instalowanie aplikacji z OpenTraceTrack.")
                                 },
                                 color = Palette.TextDim,
                                 fontSize = 12.sp,

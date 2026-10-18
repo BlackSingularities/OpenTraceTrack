@@ -21,7 +21,7 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
         vectorDrawables.useSupportLibrary = true
-        buildConfigField("String", "UPDATE_REPO", "\"BlackSingularities/GPXreg\"")
+        buildConfigField("String", "UPDATE_REPO", "\"BlackSingularities/OpenTraceTrack\"")
     }
 
     signingConfigs {

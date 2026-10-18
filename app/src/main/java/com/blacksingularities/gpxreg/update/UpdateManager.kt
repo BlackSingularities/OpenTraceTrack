@@ -44,7 +44,7 @@ object UpdateManager {
             connectTimeout = 10_000
             readTimeout = 15_000
             setRequestProperty("Accept", "application/vnd.github+json")
-            setRequestProperty("User-Agent", "GPXreg/" + BuildConfig.VERSION_NAME)
+            setRequestProperty("User-Agent", "OpenTraceTrack/" + BuildConfig.VERSION_NAME)
         }
         try {
             if (conn.responseCode == 403) error(tr("GitHub chwilowo ogranicza zapytania – spróbuj za godzinę"))
@@ -58,13 +58,13 @@ object UpdateManager {
     suspend fun download(context: Context, info: ReleaseInfo, onProgress: (Float, Long) -> Unit): File = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, "updates").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() }
-        val target = File(dir, "GPXreg-${info.version}.apk")
+        val target = File(dir, "OpenTraceTrack-${info.version}.apk")
         val part = File(dir, target.name + ".part")
         val conn = (URL(info.assetUrl).openConnection() as HttpURLConnection).apply {
             connectTimeout = 15_000
             readTimeout = 30_000
             instanceFollowRedirects = true
-            setRequestProperty("User-Agent", "GPXreg/" + BuildConfig.VERSION_NAME)
+            setRequestProperty("User-Agent", "OpenTraceTrack/" + BuildConfig.VERSION_NAME)
         }
         try {
             if (conn.responseCode !in 200..299) error(tr("Pobieranie nie powiodło się ({0})", conn.responseCode))
@@ -106,7 +106,7 @@ object UpdateManager {
         }
         if (info.packageName != expected && info.packageName + ".debug" != expected) {
             file.delete()
-            error(tr("Pobrany plik nie jest aktualizacją GPXreg"))
+            error(tr("Pobrany plik nie jest aktualizacją OpenTraceTrack"))
         }
     }
 
@@ -186,8 +186,8 @@ object UpdateManager {
         nm.createNotificationChannel(NotificationChannel(CHANNEL, tr("Aktualizacje"), NotificationManager.IMPORTANCE_HIGH))
         val pending = PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val n = Notification.Builder(context, CHANNEL)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(tr("GPXreg zaktualizowany do {0}", BuildConfig.VERSION_NAME))
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(tr("OpenTraceTrack zaktualizowany do {0}", BuildConfig.VERSION_NAME))
             .setContentText(tr("Dotknij, aby otworzyć aplikację"))
             .setContentIntent(pending)
             .setAutoCancel(true)

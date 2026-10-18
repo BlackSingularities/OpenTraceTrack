@@ -62,12 +62,12 @@ jobs:
         run: ./gradlew :app:assembleRelease -PversionCode=${{ steps.ver.outputs.code }} -PversionName=${{ steps.ver.outputs.name }} --stacktrace
 
       - name: Przygotowanie pliku
-        run: cp app/build/outputs/apk/release/app-release.apk "GPXreg-${{ steps.ver.outputs.name }}.apk"
+        run: cp app/build/outputs/apk/release/app-release.apk "OpenTraceTrack-${{ steps.ver.outputs.name }}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: GPXreg-${{ steps.ver.outputs.name }}
-          path: GPXreg-${{ steps.ver.outputs.name }}.apk
+          name: OpenTraceTrack-${{ steps.ver.outputs.name }}
+          path: OpenTraceTrack-${{ steps.ver.outputs.name }}.apk
 
       - name: Publikacja wydania
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
@@ -82,9 +82,9 @@ jobs:
             LOG=$(git log -5 --pretty='- %s' "$GITHUB_SHA")
             NOTES=$(printf 'Poprawki i ulepszenia:\n\n%s' "$LOG")
           fi
-          FOOTER=$(printf -- '---\n**Android:** pobierz **GPXreg-%s.apk** i zainstaluj go na telefonie (Android 10+). Zainstalowana aplikacja zaproponuje tę aktualizację sama.' "$NAME")
-          gh release create "$TAG" "GPXreg-$NAME.apk" \
+          FOOTER=$(printf -- '---\n**Android:** pobierz **OpenTraceTrack-%s.apk** i zainstaluj go na telefonie (Android 10+). Zainstalowana aplikacja zaproponuje tę aktualizację sama.' "$NAME")
+          gh release create "$TAG" "OpenTraceTrack-$NAME.apk" \
             --target "$GITHUB_SHA" \
-            --title "GPXreg $NAME" \
+            --title "OpenTraceTrack $NAME" \
             --notes "$(printf '%s\n\n%s' "$NOTES" "$FOOTER")" \
             --latest

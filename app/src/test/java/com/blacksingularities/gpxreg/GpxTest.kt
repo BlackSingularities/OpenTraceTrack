@@ -54,7 +54,7 @@ class GpxTest {
                 GpxSegment(1, TransportMode.TRAIN, "Pociąg", StatsAccumulator.of(train), train),
             ),
             waypoints = listOf(Waypoint(0, 0, t0 + 5000, 52.0005, 19.0, 105.0, "Kawa", "dobra")),
-            creator = "GPXreg test",
+            creator = "OpenTraceTrack test",
         )
     }
 

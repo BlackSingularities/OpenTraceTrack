@@ -236,7 +236,7 @@ fun SettingsScreen(vm: AppViewModel) {
                     ) { v -> vm.updateSettings { it.copy(useBarometer = v) } }
                     SettingRow(
                         tr("Praca w tle"),
-                        tr("Wyłącz optymalizację baterii dla GPXreg, jeśli długie nagrania się przerywają"),
+                        tr("Wyłącz optymalizację baterii dla OpenTraceTrack, jeśli długie nagrania się przerywają"),
                         Icons.Rounded.BatterySaver,
                     ) { platform.openBatterySettings() }
                 }
@@ -288,10 +288,10 @@ fun SettingsScreen(vm: AppViewModel) {
                         vm.updateSheet = true
                     }
                     ToggleRow(tr("Sprawdzaj automatycznie"), tr("Przy uruchomieniu, najwyżej co 6 godzin"), checked = s.autoUpdate) { v -> vm.updateSettings { it.copy(autoUpdate = v) } }
-                    SettingRow(tr("Kod źródłowy"), "github.com/BlackSingularities/GPXreg", Icons.Rounded.Code) { platform.openUrl(REPO_URL) }
+                    SettingRow(tr("Kod źródłowy"), "github.com/BlackSingularities/OpenTraceTrack", Icons.Rounded.Code) { platform.openUrl(REPO_URL) }
                 }
                 Text(
-                    tr("GPXreg {0} · licencja MIT · mapy © OpenStreetMap, CARTO, OpenFreeMap", BuildConfig.VERSION_NAME),
+                    tr("OpenTraceTrack {0} · licencja MIT · mapy © OpenStreetMap, CARTO, OpenFreeMap", BuildConfig.VERSION_NAME),
                     color = Palette.TextFaint,
                     fontSize = 11.sp,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 18.dp),

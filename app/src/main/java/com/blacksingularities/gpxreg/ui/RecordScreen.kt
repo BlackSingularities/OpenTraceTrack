@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,12 +63,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.blacksingularities.gpxreg.LocalPlatform
+import com.blacksingularities.gpxreg.R
 import com.blacksingularities.gpxreg.data.AppSettings
 import com.blacksingularities.gpxreg.data.LatLon
 import com.blacksingularities.gpxreg.data.RecordView
@@ -170,6 +173,7 @@ fun RecordScreen(vm: AppViewModel) {
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.Ink)) {
         val landscape = maxWidth > maxHeight && maxWidth > 560.dp
+        val tablet = maxWidth >= 840.dp
         val view = if (settings.mirror) RecordView.HUD else settings.recordView
 
         val hudBox: @Composable (Modifier) -> Unit = { m ->
@@ -216,7 +220,22 @@ fun RecordScreen(vm: AppViewModel) {
 
         Column(Modifier.fillMaxSize()) {
             TopBar(vm, rec, settings, view, landscape)
-            if (landscape) {
+            if (tablet) {
+                when (view) {
+                    RecordView.HUD -> hudBox(Modifier.weight(1f).fillMaxWidth())
+                    RecordView.MAP -> mapBox(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp))
+                    RecordView.SPLIT -> Row(
+                        Modifier.weight(1f).fillMaxWidth().padding(horizontal = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        hudBox(Modifier.weight(1f).fillMaxHeight())
+                        mapBox(Modifier.weight(1f).fillMaxHeight().padding(vertical = 4.dp))
+                    }
+                }
+                Banners(vm, rec)
+                StatsStrip(shown, units, compact = false)
+                Controls(shown, onStart = { start(settings.defaultMode) }, onStop = { stopDialog = true }, onMode = { modeSheet = true }, onLock = { locked = true })
+            } else if (landscape) {
                 Row(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     if (view != RecordView.MAP) hudBox(Modifier.weight(if (view == RecordView.HUD) 1f else 0.55f).fillMaxHeight())
                     if (view != RecordView.HUD) mapBox(Modifier.weight(0.45f).fillMaxHeight().padding(bottom = 6.dp))
@@ -277,26 +296,48 @@ fun RecordScreen(vm: AppViewModel) {
 
 @Composable
 private fun TopBar(vm: AppViewModel, rec: RecState, settings: AppSettings, view: RecordView, landscape: Boolean) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        StatusPill(rec)
-        if (!settings.mirror) {
-            Segmented(
-                listOf(RecordView.HUD to "HUD", RecordView.SPLIT to tr("Oba"), RecordView.MAP to tr("Mapa")),
-                selected = view,
-                modifier = Modifier.weight(1f).widthIn(max = if (landscape) 280.dp else 220.dp),
-            ) { v -> vm.updateSettings { it.copy(recordView = v) } }
-        } else {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.open_trace_track_mark),
+                contentDescription = tr("OpenTraceTrack"),
+                modifier = Modifier.size(32.dp),
+            )
+            Spacer(Modifier.width(7.dp))
+            Text(
+                "OpenTraceTrack",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-0.35).sp,
+            )
             Spacer(Modifier.weight(1f))
+            StatusPill(rec)
+            Spacer(Modifier.width(8.dp))
+            RoundIcon(Icons.Rounded.Settings, tr("Ustawienia"), size = 40.dp, badge = if (vm.updatePending) "1" else null) { vm.settingsOpen = true }
         }
-        RoundIcon(Icons.Rounded.Flip, tr("Odbicie na szybie (lustro)"), size = 40.dp, active = settings.mirror) {
-            vm.updateSettings { it.copy(mirror = !it.mirror) }
-            if (!settings.mirror) vm.snack(tr("Tryb lustrzany: połóż telefon pod szybą – HUD odbije się czytelnie"))
+        Row(
+            Modifier.fillMaxWidth().padding(top = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (!settings.mirror) {
+                Segmented(
+                    listOf(RecordView.HUD to "HUD", RecordView.SPLIT to tr("Oba"), RecordView.MAP to tr("Mapa")),
+                    selected = view,
+                    modifier = Modifier.weight(1f).widthIn(max = if (landscape) 280.dp else 320.dp),
+                ) { v -> vm.updateSettings { it.copy(recordView = v) } }
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+            RoundIcon(Icons.Rounded.Flip, tr("Odbicie na szybie (lustro)"), size = 40.dp, active = settings.mirror) {
+                vm.updateSettings { it.copy(mirror = !it.mirror) }
+                if (!settings.mirror) vm.snack(tr("Tryb lustrzany: połóż telefon pod szybą – HUD odbije się czytelnie"))
+            }
         }
-        RoundIcon(Icons.Rounded.Settings, tr("Ustawienia"), size = 40.dp, badge = if (vm.updatePending) "1" else null) { vm.settingsOpen = true }
     }
 }
 

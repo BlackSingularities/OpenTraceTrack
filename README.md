@@ -1,4 +1,8 @@
-# GPXreg
+# OpenTraceTrack
+
+<p align="center">
+  <img src="artwork/open-trace-track-mark.png" alt="OpenTraceTrack" width="176" />
+</p>
 
 **Prędkościomierz z HUD-em jak w samolocie i rejestrator tras GPS dla Androida** – nagrywa przejazd z podziałem na środki transportu i zapisuje go w uniwersalnym GPX, który otworzysz w Stravie, Garmin Connect, Komoot, OsmAnd czy QGIS.
 
@@ -10,7 +14,7 @@
 
 Najnowsza wersja jest zawsze w **[Releases → Latest](../../releases/latest)**. Każdy merge do `main` buduje i publikuje nowe wydanie, a aplikacja sama proponuje aktualizację i instaluje ją bez przeglądarki.
 
-1. Pobierz `GPXreg-x.y.z.apk` na telefon.
+1. Pobierz `OpenTraceTrack-x.y.z.apk` na telefon.
 2. Otwórz plik i zezwól na instalację z tego źródła.
 3. Wymagany Android 10 (API 29) lub nowszy.
 
@@ -49,7 +53,7 @@ Najnowsza wersja jest zawsze w **[Releases → Latest](../../releases/latest)**.
 
 Podział przy eksporcie: **jeden plik**, **plik na fragment** (każda przesiadka osobno) albo **plik na środek transportu** (np. cały rower razem).
 
-**Import GPX** z dowolnej aplikacji – także przez „Otwórz w” / „Udostępnij”. Typ aktywności jest rozpoznawany, brakujące prędkości wyliczane. Plik wyeksportowany z GPXreg wraca 1:1 i nie dubluje się.
+**Import GPX** z dowolnej aplikacji – także przez „Otwórz w” / „Udostępnij”. Typ aktywności jest rozpoznawany, brakujące prędkości wyliczane. Plik wyeksportowany z OpenTraceTrack wraca 1:1 i nie dubluje się.
 
 **Baza** to zwykły plik SQLite z czytelnym schematem (`tracks`, `segments`, `points`, `waypoints`, `meta`; czas w ms UTC, wartości w jednostkach SI). Kopia zapasowa to jeden plik, który otworzysz też w DB Browser for SQLite. Wczytanie kopii scala trasy po UUID – istniejące są pomijane.
 

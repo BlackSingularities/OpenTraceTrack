@@ -424,7 +424,7 @@ class TrackDb(private val context: Context) : SQLiteOpenHelper(context, NAME, nu
     data class MergeResult(val imported: Int, val skipped: Int)
 
     /**
-     * Scala trasy z innej bazy GPXreg. Trasy o istniejącym UUID są pomijane, więc ten sam plik
+     * Scala trasy z innej bazy OpenTraceTrack. Trasy o istniejącym UUID są pomijane, więc ten sam plik
      * można importować wielokrotnie bez dublowania.
      */
     fun mergeFrom(file: File): MergeResult {
@@ -435,7 +435,7 @@ class TrackDb(private val context: Context) : SQLiteOpenHelper(context, NAME, nu
         }
         src.use { s ->
             val ok = s.rawQuery("SELECT value FROM meta WHERE key='app'", null).use { it.moveToFirst() && it.getString(0) == "gpxreg" }
-            if (!ok) error(tr("Plik nie jest kopią bazy GPXreg"))
+            if (!ok) error(tr("Plik nie jest kopią bazy OpenTraceTrack"))
             var imported = 0
             var skipped = 0
             s.rawQuery("SELECT * FROM tracks WHERE recording=0", null).use { tc ->

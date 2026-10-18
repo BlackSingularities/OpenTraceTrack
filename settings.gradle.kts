@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "GPXreg"
+rootProject.name = "OpenTraceTrack"
 include(":app")
