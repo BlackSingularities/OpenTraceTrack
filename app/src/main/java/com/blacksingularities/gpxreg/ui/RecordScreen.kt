@@ -34,6 +34,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddLocationAlt
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Flip
+import androidx.compose.material.icons.rounded.Map
+import androidx.compose.material.icons.rounded.ViewAgenda
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.GpsOff
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockOpen
@@ -297,46 +300,49 @@ fun RecordScreen(vm: AppViewModel) {
 
 @Composable
 private fun TopBar(vm: AppViewModel, rec: RecState, settings: AppSettings, view: RecordView, landscape: Boolean) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp)) {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Image(
-                painter = painterResource(R.drawable.open_trace_track_mark),
-                contentDescription = tr("OpenTraceTrack"),
-                modifier = Modifier.size(32.dp),
-            )
-            Spacer(Modifier.width(7.dp))
-            Text(
-                "OpenTraceTrack",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = (-0.35).sp,
-            )
-            Spacer(Modifier.weight(1f))
-            StatusPill(rec)
-            Spacer(Modifier.width(8.dp))
-            RoundIcon(Icons.Rounded.Settings, tr("Ustawienia"), size = 40.dp, badge = if (vm.updatePending) "1" else null) { vm.settingsOpen = true }
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Image(
+            painter = painterResource(R.drawable.open_trace_track_mark),
+            contentDescription = tr("OpenTraceTrack"),
+            modifier = Modifier.size(30.dp),
+        )
+        StatusPill(rec)
+        Spacer(Modifier.weight(1f))
+        if (!settings.mirror) ViewToggle(view) { v -> vm.updateSettings { it.copy(recordView = v) } }
+        RoundIcon(Icons.Rounded.Flip, tr("Odbicie na szybie (lustro)"), size = 36.dp, active = settings.mirror) {
+            vm.updateSettings { it.copy(mirror = !it.mirror) }
+            if (!settings.mirror) vm.snack(tr("Tryb lustrzany: połóż telefon pod szybą – HUD odbije się czytelnie"))
         }
-        Row(
-            Modifier.fillMaxWidth().padding(top = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (!settings.mirror) {
-                Segmented(
-                    listOf(RecordView.HUD to "HUD", RecordView.SPLIT to tr("Oba"), RecordView.MAP to tr("Mapa")),
-                    selected = view,
-                    modifier = Modifier.weight(1f).widthIn(max = if (landscape) 280.dp else 320.dp),
-                ) { v -> vm.updateSettings { it.copy(recordView = v) } }
-            } else {
-                Spacer(Modifier.weight(1f))
-            }
-            RoundIcon(Icons.Rounded.Flip, tr("Odbicie na szybie (lustro)"), size = 40.dp, active = settings.mirror) {
-                vm.updateSettings { it.copy(mirror = !it.mirror) }
-                if (!settings.mirror) vm.snack(tr("Tryb lustrzany: połóż telefon pod szybą – HUD odbije się czytelnie"))
+        RoundIcon(Icons.Rounded.Settings, tr("Ustawienia"), size = 36.dp, badge = if (vm.updatePending) "1" else null) { vm.settingsOpen = true }
+    }
+}
+
+/** Mały przełącznik widoku: trzy ikony w jednej kapsule (HUD / oba / mapa). */
+@Composable
+private fun ViewToggle(view: RecordView, onSelect: (RecordView) -> Unit) {
+    Row(
+        Modifier.clip(Pill).background(Palette.PanelHigh).padding(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        listOf(
+            Triple(RecordView.HUD, Icons.Rounded.Speed, "HUD"),
+            Triple(RecordView.SPLIT, Icons.Rounded.ViewAgenda, tr("Oba")),
+            Triple(RecordView.MAP, Icons.Rounded.Map, tr("Mapa")),
+        ).forEach { (v, icon, label) ->
+            val on = v == view
+            Box(
+                Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(if (on) Color.White else Color.Transparent)
+                    .press(label = label) { onSelect(v) },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, label, tint = if (on) Palette.Ink else Palette.TextDim, modifier = Modifier.size(18.dp))
             }
         }
     }
