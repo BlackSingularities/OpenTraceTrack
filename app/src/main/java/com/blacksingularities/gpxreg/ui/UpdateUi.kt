@@ -97,7 +97,7 @@ fun UpdateBanner(vm: AppViewModel, modifier: Modifier = Modifier) {
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        info.changes.firstOrNull()?.notes?.lineSequence()?.map { it.trim().removePrefix("-").removePrefix("*").trim() }?.firstOrNull { it.isNotEmpty() && !it.startsWith("#") }
+                        info.changes.firstOrNull()?.notes?.lineSequence()?.map { it.trim().removePrefix("-").removePrefix("*").trim() }?.firstOrNull { it.isNotEmpty() && !it.startsWith("#") && !it.endsWith(":") }
                             ?: tr("Dotknij, aby zobaczyć zmiany"),
                         color = Palette.Ink.copy(alpha = 0.6f),
                         fontSize = 12.sp,

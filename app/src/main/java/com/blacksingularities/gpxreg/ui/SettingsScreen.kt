@@ -144,7 +144,7 @@ fun SettingsScreen(vm: AppViewModel) {
                 Group {
                     SettingRow(
                         tr("Styl"),
-                        tr("Lotniczy – taśmy i ślad ruchu; prosty – duże cyfry"),
+                        tr("Taśmy i ślad albo duże cyfry"),
                         Icons.Rounded.Speed,
                         value = if (s.hudStyle == HudStyle.AVIATION) tr("Lotniczy") else tr("Prosty"),
                     ) {
@@ -167,10 +167,10 @@ fun SettingsScreen(vm: AppViewModel) {
                             }
                         }
                     })
-                    ToggleRow(tr("Poświata"), tr("Miękki blask jak na wyświetlaczu przeziernym"), Icons.Rounded.LightMode, s.hudGlow) { v -> vm.updateSettings { it.copy(hudGlow = v) } }
+                    ToggleRow(tr("Poświata"), tr("Blask jak na prawdziwym HUD"), Icons.Rounded.LightMode, s.hudGlow) { v -> vm.updateSettings { it.copy(hudGlow = v) } }
                     ToggleRow(
                         tr("Ślad ruchu"),
-                        tr("Droga z ostatnich minut i wektor 30 s – kierunek ruchu zawsze w górę"),
+                        tr("Droga i wektor 30 s, kierunek w górę"),
                         Icons.Rounded.Timeline,
                         s.hudHorizon,
                     ) { v -> vm.updateSettings { it.copy(hudHorizon = v) } }
@@ -181,11 +181,11 @@ fun SettingsScreen(vm: AppViewModel) {
                 Group {
                     SettingRow(tr("Domyślny środek transportu"), icon = s.defaultMode.icon, value = s.defaultMode.label) { showModes = true }
                     SettingRow(
-                        tr("Wykrywanie zmiany środka transportu"),
+                        tr("Wykrywanie przesiadek"),
                         when (s.modeDetection) {
                             ModeDetection.OFF -> tr("Tylko ręcznie")
-                            ModeDetection.SUGGEST -> tr("Podpowiada przesiadkę, decydujesz Ty")
-                            ModeDetection.AUTO -> tr("Sam dzieli trasę po zmianie prędkości")
+                            ModeDetection.SUGGEST -> tr("Podpowiada, decydujesz Ty")
+                            ModeDetection.AUTO -> tr("Dzieli trasę sam")
                         },
                         Icons.Rounded.Compress,
                         value = when (s.modeDetection) {
@@ -195,7 +195,7 @@ fun SettingsScreen(vm: AppViewModel) {
                         },
                     ) {
                         pick(
-                            tr("Wykrywanie zmiany środka transportu"),
+                            tr("Wykrywanie przesiadek"),
                             listOf(ModeDetection.OFF to tr("Wyłączone"), ModeDetection.SUGGEST to tr("Podpowiedzi"), ModeDetection.AUTO to tr("Automatycznie")),
                             s.modeDetection,
                         ) { v -> vm.updateSettings { it.copy(modeDetection = v) } }

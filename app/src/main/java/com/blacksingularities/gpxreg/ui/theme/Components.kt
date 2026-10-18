@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -188,7 +189,7 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
         color = Palette.TextDim,
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
-        modifier = modifier.padding(top = 18.dp, bottom = 8.dp, start = 4.dp),
+        modifier = modifier.padding(top = 12.dp, bottom = 5.dp, start = 4.dp),
     )
 }
 
@@ -198,7 +199,7 @@ fun Group(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> 
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(Palette.PanelHigh),
         content = content,
     )
@@ -219,16 +220,16 @@ fun SettingRow(
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(enabled = enabled, onClick = onClick) else Modifier)
             .graphicsLayer { alpha = if (enabled) 1f else 0.4f }
-            .padding(horizontal = 16.dp, vertical = 13.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            Icon(icon, null, tint = Color.White, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.width(14.dp))
+            Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(12.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            if (subtitle != null) Text(subtitle, color = Palette.TextDim, fontSize = 12.sp, lineHeight = 16.sp)
+            Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (subtitle != null) Text(subtitle, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (value != null) {
             Text(value, color = Palette.TextDim, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp).widthIn(max = 160.dp))
@@ -241,6 +242,7 @@ fun SettingRow(
 fun ToggleRow(title: String, subtitle: String? = null, icon: ImageVector? = null, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
     SettingRow(title, subtitle, icon, enabled = enabled, onClick = { onChange(!checked) }, trailing = {
         Switch(
+            modifier = Modifier.height(28.dp).graphicsLayer { scaleX = 0.8f; scaleY = 0.8f },
             checked = checked,
             onCheckedChange = onChange,
             enabled = enabled,
