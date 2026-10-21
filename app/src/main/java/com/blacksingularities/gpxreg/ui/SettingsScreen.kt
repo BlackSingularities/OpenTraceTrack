@@ -25,6 +25,8 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.BatterySaver
 import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.LocalCafe
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Compress
 import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.GpsFixed
@@ -289,6 +291,8 @@ fun SettingsScreen(vm: AppViewModel) {
                     }
                     ToggleRow(tr("Sprawdzaj automatycznie"), tr("Przy uruchomieniu, najwyżej co 6 godzin"), checked = s.autoUpdate) { v -> vm.updateSettings { it.copy(autoUpdate = v) } }
                     SettingRow(tr("Kod źródłowy"), "github.com/BlackSingularities/OpenTraceTrack", Icons.Rounded.Code) { platform.openUrl(REPO_URL) }
+                    SettingRow(tr("Projekt i wykonanie"), "redzikowski.com", Icons.Rounded.Person) { platform.openUrl("https://redzikowski.com") }
+                    SettingRow(tr("Postaw kawę"), tr("Wesprzyj rozwój na buycoffee.to"), Icons.Rounded.LocalCafe) { platform.openUrl("https://buycoffee.to/adamredzikowski") }
                 }
                 Text(
                     tr("OpenTraceTrack {0} · licencja MIT · mapy © OpenStreetMap, CARTO, OpenFreeMap", BuildConfig.VERSION_NAME),
