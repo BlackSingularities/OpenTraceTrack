@@ -106,3 +106,9 @@ Download the APK from **[Releases → Latest](../../releases/latest)** (Android 
 ## Licencja / License
 
 MIT. Mapy: © OpenStreetMap contributors, CARTO, OpenFreeMap. Silnik map: [MapLibre Native](https://github.com/maplibre/maplibre-native) (BSD-2).
+
+---
+
+**Projekt i wykonanie: [redzikowski.com](https://redzikowski.com)**
+
+<a href="https://buycoffee.to/adamredzikowski" target="_blank"><img src="https://buycoffee.to/static/img/share/share-button-dark--pl.png" style="width: 351px; height: 92px" width="351" height="92" alt="Postaw kawę dla adamredzikowski na buycoffee.to"></a>
