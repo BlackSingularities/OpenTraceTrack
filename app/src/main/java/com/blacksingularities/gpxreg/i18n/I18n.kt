@@ -228,7 +228,7 @@ private val En: Map<String, String> = hashMapOf(
     "Sprawdzaj automatycznie" to "Check automatically",
     "Przy uruchomieniu, najwyżej co 6 godzin" to "On launch, at most every 6 hours",
     "Kod źródłowy" to "Source code",
-    "Projekt i wykonanie" to "Design and development",
+    "Pomysł i wykonanie" to "Idea and development",
     "Postaw kawę" to "Buy me a coffee",
     "Wesprzyj rozwój na buycoffee.to" to "Support development on buycoffee.to",
     "OpenTraceTrack {0} · licencja MIT · mapy © OpenStreetMap, CARTO, OpenFreeMap" to "OpenTraceTrack {0} · MIT licence · maps © OpenStreetMap, CARTO, OpenFreeMap",

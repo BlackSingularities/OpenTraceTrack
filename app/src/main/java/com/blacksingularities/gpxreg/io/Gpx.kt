@@ -16,7 +16,7 @@ import java.util.Locale
 import java.util.TimeZone
 import javax.xml.parsers.SAXParserFactory
 
-const val REPO_URL = "https://github.com/BlackSingularities/OpenTraceTrack"
+const val REPO_URL = "https://blacksingularities.github.io/OpenTraceTrack/"
 // Stabilny identyfikator formatu: nie zmieniamy go przy rebrandingu, by stare pliki pozostały zgodne.
 private const val NS_GPXREG = "https://github.com/BlackSingularities/GPXreg/gpx/1"
 

@@ -70,7 +70,6 @@ import com.blacksingularities.gpxreg.data.Units
 import com.blacksingularities.gpxreg.i18n.AppLanguage
 import com.blacksingularities.gpxreg.i18n.tr
 import com.blacksingularities.gpxreg.io.DataPort
-import com.blacksingularities.gpxreg.io.REPO_URL
 import com.blacksingularities.gpxreg.record.SensorHub
 import com.blacksingularities.gpxreg.update.UpdateState
 import com.blacksingularities.gpxreg.ui.theme.DarkDialog
@@ -290,8 +289,7 @@ fun SettingsScreen(vm: AppViewModel) {
                         vm.updateSheet = true
                     }
                     ToggleRow(tr("Sprawdzaj automatycznie"), tr("Przy uruchomieniu, najwyżej co 6 godzin"), checked = s.autoUpdate) { v -> vm.updateSettings { it.copy(autoUpdate = v) } }
-                    SettingRow(tr("Kod źródłowy"), "github.com/BlackSingularities/OpenTraceTrack", Icons.Rounded.Code) { platform.openUrl(REPO_URL) }
-                    SettingRow(tr("Projekt i wykonanie"), "redzikowski.com", Icons.Rounded.Person) { platform.openUrl("https://redzikowski.com") }
+                    SettingRow(tr("Pomysł i wykonanie"), "Adam Rędzikowski · redzikowski.com", Icons.Rounded.Person) { platform.openUrl("https://redzikowski.com") }
                     SettingRow(tr("Postaw kawę"), tr("Wesprzyj rozwój na buycoffee.to"), Icons.Rounded.LocalCafe) { platform.openUrl("https://buycoffee.to/adamredzikowski") }
                 }
                 Text(

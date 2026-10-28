@@ -12,7 +12,7 @@
 
 ## Pobieranie
 
-Najnowsza wersja jest zawsze w **[Releases → Latest](../../releases/latest)**. Każdy merge do `main` buduje i publikuje nowe wydanie, a aplikacja sama proponuje aktualizację i instaluje ją bez przeglądarki.
+Najnowsza wersja jest zawsze w **[Releases → Latest](../../releases/latest)**. Każdy wypchnięty tag `vX.Y.Z` buduje i publikuje nowe wydanie, a aplikacja sama proponuje aktualizację i instaluje ją bez przeglądarki.
 
 1. Pobierz `OpenTraceTrack-x.y.z.apk` na telefon.
 2. Otwórz plik i zezwól na instalację z tego źródła.
