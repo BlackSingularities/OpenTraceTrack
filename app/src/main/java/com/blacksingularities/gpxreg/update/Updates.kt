@@ -6,7 +6,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
-const val UPDATE_API = "https://api.github.com/repos/${BuildConfig.UPDATE_REPO}/releases?per_page=20"
+const val UPDATE_API = "https://redzikowski.com/api/github/repos/${BuildConfig.UPDATE_REPO}/releases?per_page=20"
 
 /** Opis jednej wersji z GitHub Releases. */
 data class ReleaseNote(val version: String, val notes: String, val date: String)
