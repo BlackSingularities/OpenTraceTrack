@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.ui
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -149,8 +150,8 @@ private fun BottomBar(tab: Tab, recording: Boolean, onSelect: (Tab) -> Unit) {
             .fillMaxWidth()
             .background(Palette.Ink)
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         NavItem(Icons.Rounded.Speed, tr("Nagrywanie"), tab == Tab.RECORD, Modifier.weight(1f), dot = recording && tab != Tab.RECORD) { onSelect(Tab.RECORD) }
         NavItem(Icons.Rounded.Route, tr("Trasy"), tab == Tab.TRACKS, Modifier.weight(1f)) { onSelect(Tab.TRACKS) }
@@ -160,22 +161,29 @@ private fun BottomBar(tab: Tab, recording: Boolean, onSelect: (Tab) -> Unit) {
 
 @Composable
 private fun NavItem(icon: ImageVector, label: String, selected: Boolean, modifier: Modifier, dot: Boolean = false, onClick: () -> Unit) {
-    Row(
+    // Styl wspólny dla aplikacji Open: wybrana zakładka to biały kafel z czarną ikoną i podpisem.
+    val bg by animateColorAsState(if (selected) Color.White else Color.Transparent, label = "tabBg")
+    val tint by animateColorAsState(if (selected) Color.Black else Palette.TextDim, label = "tabTint")
+    Column(
         modifier
-            .height(48.dp)
-            .clip(Pill)
-            .background(if (selected) Color.White else Color.Transparent)
-            .press(label = label, onClick = onClick),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+            .clip(RoundedCornerShape(6.dp))
+            .background(bg)
+            .press(label = label, onClick = onClick)
+            .padding(top = 7.dp, bottom = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box {
-            Icon(icon, null, tint = if (selected) Palette.Ink else Palette.TextDim, modifier = Modifier.size(22.dp))
-            if (dot) Box(Modifier.align(Alignment.TopEnd).size(8.dp).clip(CircleShape).background(Palette.Record))
+            Icon(icon, null, tint = tint, modifier = Modifier.size(21.dp))
+            if (dot) Box(Modifier.align(Alignment.TopEnd).size(7.dp).clip(CircleShape).background(Palette.Record))
         }
-        if (selected) {
-            Spacer(Modifier.width(8.dp))
-            Text(label, color = Palette.Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-        }
+        Spacer(Modifier.height(3.dp))
+        Text(
+            label,
+            color = tint,
+            fontSize = 10.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            maxLines = 1,
+            softWrap = false,
+        )
     }
 }
