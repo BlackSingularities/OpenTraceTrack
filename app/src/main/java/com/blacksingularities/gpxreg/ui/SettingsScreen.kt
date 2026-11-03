@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.BatterySaver
@@ -290,6 +291,7 @@ fun SettingsScreen(vm: AppViewModel) {
                     }
                     ToggleRow(tr("Sprawdzaj automatycznie"), tr("Przy uruchomieniu, najwyżej co 6 godzin"), checked = s.autoUpdate) { v -> vm.updateSettings { it.copy(autoUpdate = v) } }
                     SettingRow(tr("Pomysł i wykonanie"), "Adam Rędzikowski · redzikowski.com", Icons.Rounded.Person) { platform.openUrl("https://redzikowski.com") }
+                    SettingRow(tr("Kontakt"), "kontakt@redzikowski.com", Icons.Rounded.Email) { platform.openUrl("mailto:kontakt@redzikowski.com") }
                     SettingRow(tr("Postaw kawę"), tr("Wesprzyj rozwój na buycoffee.to"), Icons.Rounded.LocalCafe) { platform.openUrl("https://buycoffee.to/adamredzikowski") }
                 }
                 Text(
