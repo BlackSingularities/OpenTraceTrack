@@ -46,11 +46,11 @@ fun parseReleases(json: String, current: String): ReleaseInfo? {
     return ReleaseInfo(
         version = versionOf(latest),
         changes = newer.filter { !isNewer(versionOf(it), versionOf(latest)) }.map {
-            ReleaseNote(versionOf(it), cleanNotes(it.optString("body")), it.optString("published_at").take(10))
+            ReleaseNote(versionOf(it), "", it.optString("published_at").take(10))
         },
         assetUrl = url,
         sizeBytes = size,
-        pageUrl = latest.optString("html_url"),
+        pageUrl = "",
     )
 }
 

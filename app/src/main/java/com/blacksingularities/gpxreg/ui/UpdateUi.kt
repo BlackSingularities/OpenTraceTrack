@@ -97,8 +97,7 @@ fun UpdateBanner(vm: AppViewModel, modifier: Modifier = Modifier) {
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        info.changes.firstOrNull()?.notes?.lineSequence()?.map { it.trim().removePrefix("-").removePrefix("*").trim() }?.firstOrNull { it.isNotEmpty() && !it.startsWith("#") && !it.endsWith(":") }
-                            ?: tr("Dotknij, aby zobaczyć zmiany"),
+                        tr("Dotknij, aby zaktualizować"),
                         color = Palette.Ink.copy(alpha = 0.6f),
                         fontSize = 12.sp,
                         maxLines = 1,
@@ -127,14 +126,13 @@ fun UpdateBanner(vm: AppViewModel, modifier: Modifier = Modifier) {
 }
 
 /**
- * Szczegóły aktualizacji: z której na którą wersję, rozmiar, lista zmian ze wszystkich
- * pominiętych wydań, postęp pobierania i jasne informacje, co się stanie po instalacji.
+ * Szczegóły aktualizacji: z której na którą wersję, rozmiar, postęp pobierania
+ * i jasne informacje, co się stanie po instalacji.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateSheet(vm: AppViewModel) {
     val context = LocalContext.current
-    val platform = LocalPlatform.current
     val u = vm.update
     ModalBottomSheet(
         onDismissRequest = { vm.updateSheet = false },
@@ -193,36 +191,6 @@ fun UpdateSheet(vm: AppViewModel) {
                 Text(u.message, color = Palette.Record, fontSize = 13.sp, modifier = Modifier.padding(top = 14.dp))
             }
 
-            if (info != null && info.changes.isNotEmpty()) {
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    if (info.changes.size > 1) tr("Co nowego (wersje: {0})", info.changes.size) else tr("Co nowego"),
-                    color = Palette.TextDim,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(Modifier.height(8.dp))
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 320.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Palette.Ink)
-                        .verticalScroll(rememberScrollState())
-                        .padding(14.dp),
-                ) {
-                    info.changes.forEachIndexed { i, c ->
-                        if (info.changes.size > 1) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = if (i == 0) 0.dp else 14.dp, bottom = 4.dp)) {
-                                Text(c.version, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black)
-                                if (c.date.isNotBlank()) Text("  " + c.date, color = Palette.TextFaint, fontSize = 12.sp)
-                            }
-                        }
-                        MarkdownText(c.notes.ifBlank { tr("Poprawki i ulepszenia.") })
-                    }
-                }
-            }
-
             Spacer(Modifier.height(16.dp))
             AnimatedContent(u, transitionSpec = { fadeIn() togetherWith fadeOut() }, contentKey = { it::class }, label = "updateActions") { s ->
                 Column {
@@ -252,7 +220,7 @@ fun UpdateSheet(vm: AppViewModel) {
                         UpdateState.Checking -> Row(verticalAlignment = Alignment.CenterVertically) {
                             CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
                             Spacer(Modifier.width(12.dp))
-                            Text(tr("Łączenie z GitHubem…"), color = Color.White, fontSize = 14.sp)
+                            Text(tr("Sprawdzanie aktualizacji…"), color = Color.White, fontSize = 14.sp)
                         }
                         UpdateState.UpToDate, UpdateState.Idle -> PillButton(tr("Sprawdź ponownie"), Modifier.fillMaxWidth(), primary = false) { vm.checkUpdate() }
                         else -> {
@@ -283,8 +251,6 @@ fun UpdateSheet(vm: AppViewModel) {
                                 PillButton(tr("Później"), Modifier.weight(1f), primary = false) { vm.later() }
                                 if (s is UpdateState.Available) {
                                     PillButton(tr("Pomiń tę wersję"), Modifier.weight(1f), primary = false) { vm.skipVersion() }
-                                } else if (info != null) {
-                                    PillButton(tr("Strona wydania"), Modifier.weight(1f), primary = false) { platform.openUrl(info.pageUrl) }
                                 }
                             }
                         }
@@ -295,51 +261,15 @@ fun UpdateSheet(vm: AppViewModel) {
     }
 }
 
-/** „Co nowego” – raz, po zainstalowaniu aktualizacji. */
+/** Komunikat – raz, po zainstalowaniu aktualizacji (bez listy zmian). */
 @Composable
-fun WhatsNewDialog(version: String, notes: String, onDismiss: () -> Unit) {
+fun WhatsNewDialog(version: String, @Suppress("UNUSED_PARAMETER") notes: String, onDismiss: () -> Unit) {
     DarkDialog(
         tr("Zaktualizowano do {0}", version),
         onDismiss = onDismiss,
         icon = Icons.Rounded.NewReleases,
         buttons = { PillButton(tr("Super"), onClick = onDismiss) },
     ) {
-        if (notes.isBlank()) {
-            Text(tr("Poprawki i ulepszenia."), color = Palette.TextDim, fontSize = 14.sp)
-        } else {
-            MarkdownText(notes)
-        }
-    }
-}
-
-/** Minimalny Markdown z notatek wydań: nagłówki ##, punkty -, *, pogrubienie **…**. */
-@Composable
-fun MarkdownText(md: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        md.replace("\r\n", "\n").lines().forEach { raw ->
-            val line = raw.trimEnd()
-            when {
-                line.isBlank() -> Spacer(Modifier.height(2.dp))
-                line.startsWith("#") -> Text(
-                    inline(line.trimStart('#').trim()),
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
-                line.trimStart().startsWith("- ") || line.trimStart().startsWith("* ") -> Row {
-                    Text("•", color = Color.White, fontSize = 13.sp, modifier = Modifier.width(16.dp))
-                    Text(inline(line.trimStart().drop(2)), color = Palette.TextDim, fontSize = 13.sp, lineHeight = 18.sp)
-                }
-                else -> Text(inline(line), color = Palette.TextDim, fontSize = 13.sp, lineHeight = 18.sp)
-            }
-        }
-    }
-}
-
-private fun inline(s: String): AnnotatedString = buildAnnotatedString {
-    val parts = s.replace(Regex("\\[([^\\]]+)]\\([^)]+\\)"), "$1").replace("`", "").split("**")
-    parts.forEachIndexed { i, p ->
-        if (i % 2 == 1) withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Color.White)) { append(p) } else append(p)
+        Text(tr("Aplikacja została zaktualizowana."), color = Palette.TextDim, fontSize = 14.sp)
     }
 }

@@ -47,7 +47,7 @@ object UpdateManager {
             setRequestProperty("User-Agent", "OpenTraceTrack/" + BuildConfig.VERSION_NAME)
         }
         try {
-            if (conn.responseCode == 403) error(tr("GitHub chwilowo ogranicza zapytania – spróbuj za godzinę"))
+            if (conn.responseCode == 403) error(tr("Serwer aktualizacji chwilowo ogranicza zapytania – spróbuj za godzinę"))
             if (conn.responseCode != 200) error(tr("Serwer odpowiedział kodem {0}", conn.responseCode))
             return conn.inputStream.bufferedReader().use { it.readText() }
         } finally {
@@ -221,7 +221,7 @@ class UpdateReceiver : BroadcastReceiver() {
                 val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: tr("kod {0}", status)
                 if (status != PackageInstaller.STATUS_FAILURE_ABORTED) {
                     val hint = if (status == PackageInstaller.STATUS_FAILURE_CONFLICT || status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE) {
-                        tr("Wersja podpisana innym kluczem – odinstaluj aplikację i zainstaluj nową z GitHuba.")
+                        tr("Wersja podpisana innym kluczem – odinstaluj aplikację i zainstaluj nową wersję.")
                     } else {
                         msg
                     }

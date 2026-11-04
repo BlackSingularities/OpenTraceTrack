@@ -39,7 +39,7 @@ class LogicTest {
         assertEquals("u2", info.assetUrl)
         assertEquals(2048L, info.sizeBytes)
         assertEquals(listOf("1.2.0", "1.1.0"), info.changes.map { it.version })
-        assertEquals("- B", info.changes[0].notes)
+        assertEquals("", info.changes[0].notes)
         assertEquals("2026-10-02", info.changes[0].date)
         assertNull(parseReleases(json, "1.2.0"))
     }
