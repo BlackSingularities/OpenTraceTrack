@@ -1,3 +1,7 @@
+## 1.0.8
+
+- Poprawione brakujące tłumaczenie, które blokowało wydanie.
+
 ## 1.0.7
 
 - Bez żadnych wzmianek o GitHubie w aplikacji: nowy adres serwera aktualizacji, komunikaty błędów bez nazw zewnętrznych serwerów.

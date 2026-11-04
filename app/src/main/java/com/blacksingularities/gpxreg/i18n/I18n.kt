@@ -332,6 +332,7 @@ private val En: Map<String, String> = hashMapOf(
     "Pomiń tę wersję" to "Skip this version",
     "Zaktualizowano do {0}" to "Updated to {0}",
     "Super" to "Great",
+    "Kontakt" to "Contact",
     "Serwer aktualizacji chwilowo ogranicza zapytania – spróbuj za godzinę" to "The update server is rate-limiting requests – try again in an hour",
     "Serwer odpowiedział kodem {0}" to "The server responded with code {0}",
     "Pobieranie nie powiodło się ({0})" to "Download failed ({0})",
