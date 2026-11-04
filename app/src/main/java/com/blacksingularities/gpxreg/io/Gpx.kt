@@ -16,9 +16,12 @@ import java.util.Locale
 import java.util.TimeZone
 import javax.xml.parsers.SAXParserFactory
 
-const val REPO_URL = "https://blacksingularities.github.io/OpenTraceTrack/"
+const val REPO_URL = "https://redzikowski.com/portfolio/opentracetrack"
 // Stabilny identyfikator formatu: nie zmieniamy go przy rebrandingu, by stare pliki pozostały zgodne.
-private const val NS_GPXREG = "https://github.com/BlackSingularities/GPXreg/gpx/1"
+private const val NS_GPXREG = "https://redzikowski.com/opentracetrack/gpx/1"
+
+/** Przestrzeń nazw z plików zapisanych przez starsze wersje – tylko do odczytu. */
+private val NS_GPXREG_ALL = setOf(NS_GPXREG, "https://github.com/BlackSingularities/GPXreg/gpx/1")
 
 /** Fragment do zapisu: jeden `<trk>` z typem aktywności i podsumowaniem. */
 data class GpxSegment(
@@ -306,8 +309,8 @@ object GpxReader {
                     pName = ""
                     pDesc = ""
                 }
-                "track" -> if (uri == NS_GPXREG) uuid = attrs.getValue("uuid")
-                "segment" -> if (uri == NS_GPXREG) trkMode = attrs.getValue("mode")?.let { TransportMode.fromKey(it) }
+                "track" -> if (uri in NS_GPXREG_ALL) uuid = attrs.getValue("uuid")
+                "segment" -> if (uri in NS_GPXREG_ALL) trkMode = attrs.getValue("mode")?.let { TransportMode.fromKey(it) }
             }
         }
 
