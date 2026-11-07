@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Email
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.BatterySaver
@@ -340,6 +341,9 @@ fun SettingsScreen(vm: AppViewModel) {
                     }
                     SettingRow(tr(R.string.pomysl_i_wykonanie), "Adam Rędzikowski · redzikowski.com", Icons.Rounded.Person) { platform.openUrl("https://redzikowski.com") }
                     SettingRow(tr(R.string.kontakt), "kontakt@redzikowski.com", Icons.Rounded.Email) { platform.openUrl("mailto:kontakt@redzikowski.com") }
+                    com.blacksingularities.gpxreg.feedback.FeedbackEntry { open ->
+                        SettingRow(com.blacksingularities.gpxreg.feedback.FeedbackText.entryTitle, com.blacksingularities.gpxreg.feedback.FeedbackText.entrySubtitle, Icons.Rounded.BugReport) { open() }
+                    }
                     SettingRow(tr(R.string.postaw_kawe), tr(R.string.wesprzyj_rozwoj_na_buycoffee_to), Icons.Rounded.LocalCafe) { platform.openUrl("https://buycoffee.to/adamredzikowski") }
                 }
                 Text(

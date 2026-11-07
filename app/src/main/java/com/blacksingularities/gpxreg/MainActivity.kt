@@ -1,5 +1,7 @@
 package com.blacksingularities.gpxreg
 
+import com.blacksingularities.gpxreg.feedback.Feedback
+import com.blacksingularities.gpxreg.feedback.CrashReportPrompt
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -85,9 +87,11 @@ class MainActivity : ComponentActivity(), Platform {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        Feedback.install(this, "opentracetrack")
         handleIntent(intent)
         setContent {
             GpxRegTheme {
+                CrashReportPrompt()
                 CompositionLocalProvider(LocalPlatform provides this) {
                     AppRoot(vm)
                 }

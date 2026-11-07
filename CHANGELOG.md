@@ -1,3 +1,8 @@
+## 1.2.0
+
+- Zgłaszanie błędów i sugestii: nowa pozycja „Zgłoś błąd lub sugestię” – opis trafia prosto do autora przez redzikowski.com, e-mail jest opcjonalny.
+- Po nieoczekiwanym zamknięciu aplikacja przy następnym uruchomieniu proponuje wysłanie raportu o błędzie – tylko za zgodą użytkownika.
+
 ## 1.1.1
 
 - Start nagrywania bez otwierania aplikacji: kafelek w szybkich ustawieniach, widżet na ekranie głównym i skróty na ikonie aplikacji.
