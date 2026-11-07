@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.data
 
+import com.blacksingularities.gpxreg.R
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
@@ -35,9 +36,21 @@ class TrackDb(private val context: Context) : SQLiteOpenHelper(context, NAME, nu
 
     override fun onCreate(db: SQLiteDatabase) = createSchema(db)
 
+    /**
+     * Migracje schematu: każda wersja ma swój krok (z N-1 do N), wykonywany po kolei w jednej
+     * transakcji. Nowy krok: dopisz go do [MIGRATIONS] i podnieś [VERSION]; [createSchema] musi
+     * od razu tworzyć najnowszy schemat dla nowych instalacji.
+     */
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Pierwsza wersja schematu – migracje dojdą tutaj.
+        for (v in (oldVersion + 1)..newVersion) {
+            val step = MIGRATIONS[v] ?: error("Brak migracji bazy do wersji $v")
+            step(db)
+        }
+        db.execSQL("INSERT OR REPLACE INTO meta(key, value) VALUES('schema', '$newVersion')")
     }
+
+    /** Starsza wersja aplikacji na nowszej bazie: zmiany są tylko dodające, więc dane zostają czytelne. */
+    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
     // ---------------------------------------------------------------- trasy
 
@@ -431,11 +444,11 @@ class TrackDb(private val context: Context) : SQLiteOpenHelper(context, NAME, nu
         val src = try {
             SQLiteDatabase.openDatabase(file.path, null, SQLiteDatabase.OPEN_READONLY)
         } catch (e: Exception) {
-            error(tr("To nie jest plik bazy SQLite"))
+            error(tr(R.string.to_nie_jest_plik_bazy_sqlite))
         }
         src.use { s ->
             val ok = s.rawQuery("SELECT value FROM meta WHERE key='app'", null).use { it.moveToFirst() && it.getString(0) == "gpxreg" }
-            if (!ok) error(tr("Plik nie jest kopią bazy OpenTraceTrack"))
+            if (!ok) error(tr(R.string.plik_nie_jest_kopia_bazy_opentracetrack))
             var imported = 0
             var skipped = 0
             s.rawQuery("SELECT * FROM tracks WHERE recording=0", null).use { tc ->
@@ -565,7 +578,13 @@ class TrackDb(private val context: Context) : SQLiteOpenHelper(context, NAME, nu
 
     companion object {
         const val NAME = "gpxreg.db"
-        const val VERSION = 1
+        const val VERSION = 2
+
+        /** Kroki migracji – klucz to wersja docelowa. */
+        private val MIGRATIONS: Map<Int, (SQLiteDatabase) -> Unit> = mapOf(
+            // 2: szybsze sortowanie i filtrowanie listy tras po dacie.
+            2 to { db -> db.execSQL("CREATE INDEX IF NOT EXISTS tracks_start ON tracks(start_time)") },
+        )
 
         fun encodePreview(p: List<LatLon>) = p.joinToString(";") { "%.5f,%.5f".format(java.util.Locale.US, it.lat, it.lon) }
         fun decodePreview(s: String): List<LatLon> = if (s.isBlank()) emptyList() else s.split(';').mapNotNull { part ->
@@ -652,6 +671,7 @@ class TrackDb(private val context: Context) : SQLiteOpenHelper(context, NAME, nu
             db.execSQL("CREATE INDEX points_segment ON points(segment_id)")
             db.execSQL("CREATE INDEX segments_track ON segments(track_id, idx)")
             db.execSQL("CREATE INDEX waypoints_track ON waypoints(track_id)")
+            db.execSQL("CREATE INDEX tracks_start ON tracks(start_time)")
         }
     }
 }

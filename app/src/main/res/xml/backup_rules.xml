@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kopia Google (Android 11 i starsze): baza tras i ustawienia, bez plików podręcznych i dziennika błędów. -->
+<full-backup-content>
+    <include domain="database" path="gpxreg.db" />
+    <include domain="sharedpref" path="gpxreg_settings.xml" />
+    <include domain="sharedpref" path="route_guide.xml" />
+</full-backup-content>

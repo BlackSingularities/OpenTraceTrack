@@ -1,3 +1,18 @@
+## 1.1.0
+
+- Start nagrywania bez otwierania aplikacji: kafelek w szybkich ustawieniach, widżet na ekranie głównym i skróty na ikonie aplikacji.
+- „Jedź tą trasą”: wybrana trasa na mapie nagrywania, odchylenie od śladu, dystans do końca i wibracja po zjechaniu z trasy.
+- Mapy offline: pobieranie okolicy trasy i większa pamięć kafelków już oglądanych.
+- Mapa cieplna wszystkich tras w statystykach.
+- Import KML, GeoJSON i FIT (Garmin, Wahoo, Coros, Suunto) obok GPX.
+- Automatyczna kopia bazy do wybranego folderu – po każdym nagraniu, codziennie albo co tydzień.
+- Ekran powitalny wyjaśniający uprawnienia, przewodnik „Praca w tle” dla telefonów Xiaomi, Samsung, Huawei, Oppo i Vivo.
+- Ostrzeżenie, gdy w trakcie nagrania wyłączysz lokalizację, i podpowiedź przy przybliżonej lokalizacji.
+- Ekran „O aplikacji” z prywatnością i licencjami, lokalny dziennik błędów do udostępnienia autorowi.
+- Lepsza obsługa czytników ekranu (opis HUD, przełączniki jako jeden element).
+- Tłumaczenia w standardowych plikach strings.xml – dodanie języka nie wymaga zmian w kodzie; poprawna odmiana liczebników.
+- Migracje schematu bazy i reguły kopii zapasowej Androida (baza i ustawienia przenoszą się na nowy telefon).
+
 ## 1.0.8
 
 - Poprawione brakujące tłumaczenie, które blokowało wydanie.

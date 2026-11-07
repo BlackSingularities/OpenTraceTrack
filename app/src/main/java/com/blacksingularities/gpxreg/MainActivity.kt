@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -15,10 +16,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.blacksingularities.gpxreg.i18n.I18n
 import com.blacksingularities.gpxreg.record.SensorHub
 import com.blacksingularities.gpxreg.ui.AppRoot
 import com.blacksingularities.gpxreg.ui.AppViewModel
+import com.blacksingularities.gpxreg.ui.Tab
 import com.blacksingularities.gpxreg.ui.theme.GpxRegTheme
+import com.blacksingularities.gpxreg.widget.QuickActions
 
 /** Systemowe okna i uprawnienia dostępne dla interfejsu. */
 interface Platform {
@@ -34,6 +38,11 @@ interface Platform {
     fun openAppSettings()
     fun openLocationSettings()
     fun openBatterySettings()
+    /** Systemowe okno „Zezwolić na działanie w tle bez ograniczeń?”. */
+    fun requestIgnoreBattery()
+    fun isIgnoringBattery(): Boolean
+    /** Użytkownik dał tylko przybliżoną lokalizację – trasa byłaby bezużyteczna. */
+    fun hasCoarseOnly(): Boolean
     fun keepScreenOn(on: Boolean)
 }
 
@@ -95,6 +104,7 @@ class MainActivity : ComponentActivity(), Platform {
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
+        I18n.refresh()
         @Suppress("DEPRECATION")
         SensorHub.displayRotation = windowManager.defaultDisplay.rotation
     }
@@ -107,6 +117,30 @@ class MainActivity : ComponentActivity(), Platform {
     /** Plik GPX otwarty lub udostępniony z innej aplikacji. */
     private fun handleIntent(intent: Intent?) {
         intent ?: return
+        when (intent.action) {
+            QuickActions.START -> {
+                vm.openTrack = null
+                vm.settingsOpen = false
+                vm.tab = Tab.RECORD
+                vm.startRequested = true
+                setIntent(Intent(this, MainActivity::class.java))
+                return
+            }
+            QuickActions.OPEN_RECORDING -> {
+                vm.openTrack = null
+                vm.settingsOpen = false
+                vm.tab = Tab.RECORD
+                setIntent(Intent(this, MainActivity::class.java))
+                return
+            }
+            ACTION_TRACKS -> {
+                vm.openTrack = null
+                vm.settingsOpen = false
+                vm.tab = Tab.TRACKS
+                setIntent(Intent(this, MainActivity::class.java))
+                return
+            }
+        }
         val uris: List<Uri> = when (intent.action) {
             Intent.ACTION_VIEW -> listOfNotNull(intent.data)
             Intent.ACTION_SEND -> listOfNotNull(
@@ -128,7 +162,12 @@ class MainActivity : ComponentActivity(), Platform {
     // ------------------------------------------------------------ Platform
 
     override fun pickGpx() {
-        runCatching { gpxPicker.launch(arrayOf("application/gpx+xml", "application/xml", "text/xml", "application/octet-stream", "*/*")) }
+        runCatching { gpxPicker.launch(
+                arrayOf(
+                    "application/gpx+xml", "application/vnd.google-earth.kml+xml", "application/geo+json", "application/json",
+                    "application/vnd.ant.fit", "application/xml", "text/xml", "application/octet-stream", "*/*",
+                ),
+            ) }
     }
 
     override fun pickBackup() {
@@ -181,7 +220,23 @@ class MainActivity : ComponentActivity(), Platform {
         runCatching { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
     }
 
+    override fun requestIgnoreBattery() {
+        @Suppress("BatteryLife")
+        val ok = runCatching { startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))) }.isSuccess
+        if (!ok) openBatterySettings()
+    }
+
+    override fun isIgnoringBattery(): Boolean =
+        getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(packageName) == true
+
+    override fun hasCoarseOnly(): Boolean =
+        !hasLocation() && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
     override fun keepScreenOn(on: Boolean) {
         if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    companion object {
+        const val ACTION_TRACKS = "com.blacksingularities.gpxreg.action.TRACKS"
     }
 }

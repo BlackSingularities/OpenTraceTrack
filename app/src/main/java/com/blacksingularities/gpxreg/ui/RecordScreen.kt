@@ -47,6 +47,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material.icons.rounded.Route
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -84,6 +85,10 @@ import com.blacksingularities.gpxreg.record.LocationHub
 import com.blacksingularities.gpxreg.record.RecState
 import com.blacksingularities.gpxreg.record.RecStatus
 import com.blacksingularities.gpxreg.record.Recorder
+import com.blacksingularities.gpxreg.record.RouteGuide
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import kotlin.math.roundToInt
 import com.blacksingularities.gpxreg.record.SensorHub
 import com.blacksingularities.gpxreg.record.Telemetry
 import com.blacksingularities.gpxreg.ui.hud.Hud
@@ -110,6 +115,7 @@ fun RecordScreen(vm: AppViewModel) {
     val att by SensorHub.attitude.collectAsStateWithLifecycle()
     val gnss by LocationHub.gnss.collectAsStateWithLifecycle()
     val units = remember(settings.units) { Units(settings.units) }
+    val guide by RouteGuide.state.collectAsStateWithLifecycle()
 
     var hasPerm by remember { mutableStateOf(platform.hasLocation()) }
     var modeSheet by remember { mutableStateOf(false) }
@@ -137,22 +143,33 @@ fun RecordScreen(vm: AppViewModel) {
         platform.keepScreenOn(settings.keepScreenOn)
         onDispose { platform.keepScreenOn(false) }
     }
-    LaunchedEffect(Unit) {
-        if (!hasPerm) platform.requestLocation { hasPerm = it }
+    // Pierwsze uruchomienie: o uprawnienia pyta ekran powitalny, potem tylko sprawdzamy wynik.
+    LaunchedEffect(settings.onboarded) {
+        hasPerm = platform.hasLocation()
+        if (!hasPerm && settings.onboarded) platform.requestLocation { hasPerm = it }
     }
 
     fun start(mode: TransportMode) {
         platform.requestLocation { ok ->
             hasPerm = ok
             if (!ok) {
-                vm.snack(tr("Bez dostępu do lokalizacji nie da się nagrać trasy"), tr("Ustawienia")) { platform.openAppSettings() }
+                val msg = if (platform.hasCoarseOnly()) tr(R.string.precise_needed_title) else tr(R.string.bez_dostepu_do_lokalizacji_nie_da)
+                vm.snack(msg, tr(R.string.ustawienia)) { platform.openAppSettings() }
                 return@requestLocation
             }
             if (!LocationHub.isGpsEnabled(context)) {
-                vm.snack(tr("Lokalizacja w telefonie jest wyłączona"), tr("Włącz")) { platform.openLocationSettings() }
+                vm.snack(tr(R.string.lokalizacja_w_telefonie_jest_wylaczona), tr(R.string.wlacz)) { platform.openLocationSettings() }
                 return@requestLocation
             }
             platform.requestNotifications { Recorder.requestStart(context, mode) }
+        }
+    }
+
+    // Start zlecony ze skrótu, widżetu albo kafelka szybkich ustawień.
+    LaunchedEffect(vm.startRequested) {
+        if (vm.startRequested) {
+            vm.startRequested = false
+            if (!Recorder.state.value.active) start(settings.defaultMode)
         }
     }
 
@@ -182,18 +199,28 @@ fun RecordScreen(vm: AppViewModel) {
 
         val hudBox: @Composable (Modifier) -> Unit = { m ->
             Box(m) {
+                val hudDescription = buildString {
+                    append(tr(R.string.a11y_hud_speed, units.fmtSpeed(tel.speed)))
+                    tel.alt?.let { append(", ").append(tr(R.string.a11y_hud_altitude, units.fmtAlt(it))) }
+                    tel.course?.let { append(", ").append(tr(R.string.a11y_hud_course, it.roundToInt())) }
+                }
                 Hud(
                     hudInput,
                     Modifier
                         .fillMaxSize()
+                        .clearAndSetSemantics { contentDescription = hudDescription }
                         .graphicsLayer { if (settings.mirror) scaleX = -1f },
                 )
-                if (!hasPerm) {
-                    NoticeCard(Icons.Rounded.GpsOff, tr("Potrzebny dostęp do lokalizacji"), tr("HUD i nagrywanie korzystają z odbiornika GPS telefonu."), tr("Zezwól")) {
+                if (!hasPerm && platform.hasCoarseOnly()) {
+                    NoticeCard(Icons.Rounded.GpsOff, tr(R.string.precise_needed_title), tr(R.string.precise_needed_text), tr(R.string.ustawienia)) {
+                        platform.requestLocation { ok -> hasPerm = ok; if (!ok) platform.openAppSettings() }
+                    }
+                } else if (!hasPerm) {
+                    NoticeCard(Icons.Rounded.GpsOff, tr(R.string.potrzebny_dostep_do_lokalizacji), tr(R.string.hud_i_nagrywanie_korzystaja_z_odbiornika), tr(R.string.zezwol)) {
                         platform.requestLocation { ok -> hasPerm = ok; if (!ok) platform.openAppSettings() }
                     }
                 } else if (!gnss.enabled) {
-                    NoticeCard(Icons.Rounded.GpsOff, tr("Lokalizacja jest wyłączona"), tr("Włącz ją w ustawieniach telefonu, aby zobaczyć prędkość."), tr("Włącz")) {
+                    NoticeCard(Icons.Rounded.GpsOff, tr(R.string.lokalizacja_jest_wylaczona), tr(R.string.wlacz_ja_w_ustawieniach_telefonu_aby), tr(R.string.wlacz)) {
                         platform.openLocationSettings()
                     }
                 }
@@ -208,11 +235,12 @@ fun RecordScreen(vm: AppViewModel) {
                     follow = follow,
                     onFollowChange = { follow = it },
                     modifier = Modifier.fillMaxSize(),
+                    guide = guide?.points.orEmpty(),
                 )
                 if (!follow) {
                     RoundIcon(
                         Icons.Rounded.MyLocation,
-                        tr("Pokaż moją pozycję"),
+                        tr(R.string.pokaz_moja_pozycje),
                         Modifier.align(Alignment.BottomEnd).padding(10.dp),
                         size = 42.dp,
                         background = Palette.Ink,
@@ -236,7 +264,7 @@ fun RecordScreen(vm: AppViewModel) {
                         mapBox(Modifier.weight(1f).fillMaxHeight().padding(vertical = 4.dp))
                     }
                 }
-                Banners(vm, rec)
+                Banners(vm, rec, units)
                 StatsStrip(shown, units, compact = false)
                 Controls(shown, onStart = { start(settings.defaultMode) }, onStop = { stopDialog = true }, onMode = { modeSheet = true }, onLock = { locked = true })
             } else if (landscape) {
@@ -244,7 +272,7 @@ fun RecordScreen(vm: AppViewModel) {
                     if (view != RecordView.MAP) hudBox(Modifier.weight(if (view == RecordView.HUD) 1f else 0.55f).fillMaxHeight())
                     if (view != RecordView.HUD) mapBox(Modifier.weight(0.45f).fillMaxHeight().padding(bottom = 6.dp))
                     Column(Modifier.width(300.dp).fillMaxHeight(), verticalArrangement = Arrangement.Bottom) {
-                        Banners(vm, rec)
+                        Banners(vm, rec, units)
                         StatsStrip(shown, units, compact = true)
                         Controls(shown, onStart = { start(settings.defaultMode) }, onStop = { stopDialog = true }, onMode = { modeSheet = true }, onLock = { locked = true })
                     }
@@ -258,7 +286,7 @@ fun RecordScreen(vm: AppViewModel) {
                         mapBox(Modifier.weight(0.44f).fillMaxWidth().padding(horizontal = 10.dp))
                     }
                 }
-                Banners(vm, rec)
+                Banners(vm, rec, units)
                 StatsStrip(shown, units, compact = false)
                 Controls(shown, onStart = { start(settings.defaultMode) }, onStop = { stopDialog = true }, onMode = { modeSheet = true }, onLock = { locked = true })
             }
@@ -274,22 +302,22 @@ fun RecordScreen(vm: AppViewModel) {
 
     if (stopDialog) {
         DarkDialog(
-            tr("Zakończyć nagrywanie?"),
+            tr(R.string.zakonczyc_nagrywanie),
             onDismiss = { stopDialog = false },
             icon = Icons.Rounded.Stop,
             buttons = {
-                PillButton(tr("Odrzuć"), primary = false) {
+                PillButton(tr(R.string.odrzuc), primary = false) {
                     stopDialog = false
                     Recorder.discard()
                 }
-                PillButton(tr("Zapisz trasę")) {
+                PillButton(tr(R.string.zapisz_trase)) {
                     stopDialog = false
                     Recorder.stop()
                 }
             },
         ) {
             Text(
-                tr("{0} w {1}, fragmenty: {2}. Trasa trafi na listę – stamtąd wyeksportujesz ją jako GPX.", units.fmtDist(rec.total.distance), Units.duration(rec.elapsed), rec.segments.size),
+                tr(R.string.x_w_x_fragmenty_x_trasa, units.fmtDist(rec.total.distance), Units.duration(rec.elapsed), rec.segments.size),
                 color = Palette.TextDim,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
@@ -307,17 +335,17 @@ private fun TopBar(vm: AppViewModel, rec: RecState, settings: AppSettings, view:
     ) {
         Image(
             painter = painterResource(R.drawable.open_trace_track_mark),
-            contentDescription = tr("OpenTraceTrack"),
+            contentDescription = tr(R.string.opentracetrack),
             modifier = Modifier.size(30.dp),
         )
         StatusPill(rec)
         Spacer(Modifier.weight(1f))
         if (!settings.mirror) ViewToggle(view) { v -> vm.updateSettings { it.copy(recordView = v) } }
-        RoundIcon(Icons.Rounded.Flip, tr("Odbicie na szybie (lustro)"), size = 36.dp, active = settings.mirror) {
+        RoundIcon(Icons.Rounded.Flip, tr(R.string.odbicie_na_szybie_lustro), size = 36.dp, active = settings.mirror) {
             vm.updateSettings { it.copy(mirror = !it.mirror) }
-            if (!settings.mirror) vm.snack(tr("Tryb lustrzany: połóż telefon pod szybą – HUD odbije się czytelnie"))
+            if (!settings.mirror) vm.snack(tr(R.string.tryb_lustrzany_poloz_telefon_pod_szyba))
         }
-        RoundIcon(Icons.Rounded.Settings, tr("Ustawienia"), size = 36.dp, badge = if (vm.updatePending) "1" else null) { vm.settingsOpen = true }
+        RoundIcon(Icons.Rounded.Settings, tr(R.string.ustawienia), size = 36.dp, badge = if (vm.updatePending) "1" else null) { vm.settingsOpen = true }
     }
 }
 
@@ -330,8 +358,8 @@ private fun ViewToggle(view: RecordView, onSelect: (RecordView) -> Unit) {
     ) {
         listOf(
             Triple(RecordView.HUD, Icons.Rounded.Speed, "HUD"),
-            Triple(RecordView.SPLIT, Icons.Rounded.ViewAgenda, tr("Oba")),
-            Triple(RecordView.MAP, Icons.Rounded.Map, tr("Mapa")),
+            Triple(RecordView.SPLIT, Icons.Rounded.ViewAgenda, tr(R.string.oba)),
+            Triple(RecordView.MAP, Icons.Rounded.Map, tr(R.string.mapa)),
         ).forEach { (v, icon, label) ->
             val on = v == view
             Box(
@@ -354,9 +382,9 @@ private fun StatusPill(rec: RecState) {
     val a by blink.animateFloat(1f, 0.25f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "recDot")
     val (text, color) = when (rec.status) {
         RecStatus.RECORDING -> Units.duration(rec.elapsed) to Palette.Record
-        RecStatus.PAUSED -> tr("Pauza") to Palette.Warn
-        RecStatus.AUTO_PAUSED -> tr("Postój") to Palette.Warn
-        RecStatus.IDLE -> tr("Gotowy") to Palette.TextFaint
+        RecStatus.PAUSED -> tr(R.string.pauza) to Palette.Warn
+        RecStatus.AUTO_PAUSED -> tr(R.string.postoj) to Palette.Warn
+        RecStatus.IDLE -> tr(R.string.gotowy) to Palette.TextFaint
     }
     Row(
         Modifier.clip(Pill).background(Palette.PanelHigh).padding(horizontal = 12.dp, vertical = 8.dp),
@@ -375,17 +403,34 @@ private fun StatusPill(rec: RecState) {
 }
 
 @Composable
-private fun Banners(vm: AppViewModel, rec: RecState) {
+private fun Banners(vm: AppViewModel, rec: RecState, units: Units) {
     val context = LocalContext.current
+    val guide by RouteGuide.state.collectAsStateWithLifecycle()
+    val g = guide
+    AnimatedVisibility(g != null && !rec.interrupted, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+        if (g != null) {
+            BannerRow(
+                Icons.Rounded.Route,
+                when {
+                    g.finished -> tr(R.string.guide_finished)
+                    g.offRoute -> tr(R.string.guide_off_route, units.fmtDist(g.deviation ?: 0.0))
+                    else -> tr(R.string.guide_title, g.name)
+                },
+                g.remaining?.let { tr(R.string.guide_remaining, units.fmtDist(it), units.fmtDist(g.length)) } ?: tr(R.string.guide_waiting, units.fmtDist(g.length)),
+            ) {
+                RoundIcon(Icons.Rounded.Close, tr(R.string.guide_stop), size = 38.dp) { vm.stopFollowing() }
+            }
+        }
+    }
     AnimatedVisibility(rec.interrupted, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
         BannerRow(
             Icons.Rounded.Warning,
-            tr("Nagrywanie zostało przerwane"),
-            tr("System zamknął aplikację. Punkty do tej chwili są zapisane."),
+            tr(R.string.nagrywanie_zostalo_przerwane),
+            tr(R.string.system_zamknal_aplikacje_punkty_do_tej),
         ) {
-            PillButton(tr("Zakończ"), primary = false) { Recorder.stop() }
+            PillButton(tr(R.string.zakoncz), primary = false) { Recorder.stop() }
             Spacer(Modifier.width(6.dp))
-            PillButton(tr("Wznów")) { Recorder.requestResumeInterrupted(context) }
+            PillButton(tr(R.string.wznow)) { Recorder.requestResumeInterrupted(context) }
         }
     }
     val sug = rec.suggestion
@@ -393,18 +438,18 @@ private fun Banners(vm: AppViewModel, rec: RecState) {
         if (sug != null) {
             BannerRow(
                 sug.mode.icon,
-                tr("Wygląda na: {0}", sug.mode.label),
-                tr("Od {0} prędkość pasuje do innego środka transportu.", Units.time(sug.since)),
+                tr(R.string.wyglada_na_x, sug.mode.label),
+                tr(R.string.od_x_predkosc_pasuje_do_innego, Units.time(sug.since)),
             ) {
-                RoundIcon(Icons.Rounded.Close, tr("Nie zmieniaj"), size = 38.dp) { Recorder.dismissSuggestion() }
+                RoundIcon(Icons.Rounded.Close, tr(R.string.nie_zmieniaj), size = 38.dp) { Recorder.dismissSuggestion() }
                 Spacer(Modifier.width(6.dp))
-                PillButton(tr("Przełącz")) { Recorder.switchMode(sug.mode, sug.since) }
+                PillButton(tr(R.string.przelacz)) { Recorder.switchMode(sug.mode, sug.since) }
             }
         }
     }
     AnimatedVisibility(rec.active && rec.poorSignal && !rec.interrupted) {
         Text(
-            tr("Słaby sygnał GPS – czekam na dokładniejszą pozycję"),
+            tr(R.string.slaby_sygnal_gps_czekam_na_dokladniejsza),
             color = Palette.Warn,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
@@ -439,14 +484,14 @@ private fun BannerRow(icon: androidx.compose.ui.graphics.vector.ImageVector, tit
 private fun StatsStrip(rec: RecState, units: Units, compact: Boolean) {
     val t = rec.total
     val cells = buildList {
-        add(tr("Dystans") to units.fmtDist(t.distance))
-        add(tr("Czas") to Units.duration(rec.elapsed))
+        add(tr(R.string.dystans) to units.fmtDist(t.distance))
+        add(tr(R.string.czas) to Units.duration(rec.elapsed))
         if (rec.mode.group == com.blacksingularities.gpxreg.data.ModeGroup.FOOT || rec.mode.group == com.blacksingularities.gpxreg.data.ModeGroup.RUN) {
-            add(tr("Tempo") + " /" + units.distUnit to units.fmtPace(t.avgMovingSpeed).substringBefore(" /"))
+            add(tr(R.string.tempo) + " /" + units.distUnit to units.fmtPace(t.avgMovingSpeed).substringBefore(" /"))
         } else {
-            add(tr("Średnia") + " " + units.speedUnit to units.num(units.speed(t.avgMovingSpeed), 1))
+            add(tr(R.string.srednia) + " " + units.speedUnit to units.num(units.speed(t.avgMovingSpeed), 1))
         }
-        add(tr("W górę") to units.fmtAlt(t.ascent))
+        add(tr(R.string.w_gore) to units.fmtAlt(t.ascent))
     }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = if (compact) 4.dp else 8.dp)) {
         Row(Modifier.fillMaxWidth()) {
@@ -482,7 +527,7 @@ private fun Controls(rec: RecState, onStart: () -> Unit, onStop: () -> Unit, onM
                 .height(56.dp)
                 .clip(Pill)
                 .background(Palette.PanelHigh)
-                .press(label = tr("Środek transportu")) { onMode() }
+                .press(label = tr(R.string.srodek_transportu)) { onMode() }
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -490,7 +535,7 @@ private fun Controls(rec: RecState, onStart: () -> Unit, onStop: () -> Unit, onM
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(rec.mode.label, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(if (rec.active) tr("Dotknij, aby zmienić") else tr("Środek transportu"), color = Palette.TextDim, fontSize = 11.sp, maxLines = 1)
+                Text(if (rec.active) tr(R.string.dotknij_aby_zmienic) else tr(R.string.srodek_transportu), color = Palette.TextDim, fontSize = 11.sp, maxLines = 1)
             }
             Icon(Icons.Rounded.SwapHoriz, null, tint = Palette.TextDim, modifier = Modifier.size(20.dp))
         }
@@ -501,17 +546,17 @@ private fun Controls(rec: RecState, onStart: () -> Unit, onStop: () -> Unit, onM
             val paused = rec.status == RecStatus.PAUSED
             RoundIcon(
                 if (paused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause,
-                if (paused) tr("Wznów") else tr("Pauza"),
+                if (paused) tr(R.string.wznow) else tr(R.string.pauza),
                 size = 64.dp,
                 active = true,
             ) { if (paused) Recorder.resume() else Recorder.pause() }
             Spacer(Modifier.width(10.dp))
-            RoundIcon(Icons.Rounded.Stop, tr("Zakończ"), size = 52.dp, background = Palette.Record) { onStop() }
+            RoundIcon(Icons.Rounded.Stop, tr(R.string.zakoncz), size = 52.dp, background = Palette.Record) { onStop() }
         }
         Spacer(Modifier.width(10.dp))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            RoundIcon(Icons.Rounded.AddLocationAlt, tr("Dodaj znacznik"), size = 40.dp, enabled = rec.active) { Recorder.addWaypoint() }
-            RoundIcon(Icons.Rounded.Lock, tr("Zablokuj ekran"), size = 40.dp) { onLock() }
+            RoundIcon(Icons.Rounded.AddLocationAlt, tr(R.string.dodaj_znacznik), size = 40.dp, enabled = rec.active) { Recorder.addWaypoint() }
+            RoundIcon(Icons.Rounded.Lock, tr(R.string.zablokuj_ekran), size = 40.dp) { onLock() }
         }
     }
 }
@@ -526,7 +571,7 @@ private fun RecordButton(onClick: () -> Unit) {
             .padding(7.dp)
             .clip(CircleShape)
             .background(Palette.Record)
-            .press(label = tr("Rozpocznij nagrywanie"), onClick = onClick),
+            .press(label = tr(R.string.rozpocznij_nagrywanie), onClick = onClick),
     )
 }
 
@@ -579,7 +624,7 @@ private fun LockOverlay(onUnlock: () -> Unit) {
         ) {
             Icon(Icons.Rounded.LockOpen, null, tint = Color.White, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(10.dp))
-            Text(tr("Przytrzymaj, aby odblokować"), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(tr(R.string.przytrzymaj_aby_odblokowac), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -594,11 +639,11 @@ private fun ModeSheet(rec: RecState, settings: AppSettings, onDismiss: () -> Uni
         contentColor = Color.White,
     ) {
         Column(Modifier.padding(horizontal = 18.dp).padding(bottom = 28.dp)) {
-            Text(if (rec.active) tr("Zmień środek transportu") else tr("Czym się poruszasz?"), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(if (rec.active) tr(R.string.zmien_srodek_transportu) else tr(R.string.czym_sie_poruszasz), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
             Text(
-                if (rec.active) tr("Od tej chwili zacznie się nowy fragment – każdy wyeksportujesz jako osobny plik GPX.")
-                else tr("Możesz go zmieniać w trakcie nagrywania, np. przy przesiadce z roweru do pociągu."),
+                if (rec.active) tr(R.string.od_tej_chwili_zacznie_sie_nowy)
+                else tr(R.string.mozesz_go_zmieniac_w_trakcie_nagrywania),
                 color = Palette.TextDim,
                 fontSize = 13.sp,
                 lineHeight = 18.sp,

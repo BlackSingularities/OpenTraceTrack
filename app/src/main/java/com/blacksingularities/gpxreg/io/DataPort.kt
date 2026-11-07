@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.io
 
+import com.blacksingularities.gpxreg.R
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -43,7 +44,7 @@ class DataPort(private val context: Context, private val db: TrackDb) {
 
     /** Dokument trasy; [segmentIds] – tylko wybrane fragmenty. */
     fun document(trackId: Long, segmentIds: Set<Long>? = null): GpxDocument {
-        val track = db.track(trackId) ?: error(tr("Nie znaleziono trasy"))
+        val track = db.track(trackId) ?: error(tr(R.string.nie_znaleziono_trasy))
         val pts = db.points(trackId).groupBy { it.segmentId }
         val units = Units(com.blacksingularities.gpxreg.data.UnitSystem.METRIC)
         val segs = track.segments.filter { segmentIds == null || it.id in segmentIds }.map { s ->
@@ -135,13 +136,13 @@ class DataPort(private val context: Context, private val db: TrackDb) {
         }
         send.type = if (uris.size == 1) mime else "*/*"
         send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        return Intent.createChooser(send, tr("Udostępnij")).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        return Intent.createChooser(send, tr(R.string.udostepnij)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
     /** Zapis pliku pod adres wybrany w systemowym oknie „Zapisz jako”. */
     fun copyTo(file: File, target: Uri) {
         context.contentResolver.openOutputStream(target, "wt")?.use { out -> file.inputStream().use { it.copyTo(out) } }
-            ?: error(tr("Nie można zapisać pliku"))
+            ?: error(tr(R.string.nie_mozna_zapisac_pliku))
     }
 
     /** Zapis wielu plików do folderu wybranego przez użytkownika. */
@@ -161,7 +162,7 @@ class DataPort(private val context: Context, private val db: TrackDb) {
     data class ImportResult(val trackIds: List<Long>, val skipped: Int, val failed: List<String>)
 
     /**
-     * Import plików GPX. Każdy plik to jedna trasa; jego ścieżki `<trk>` stają się fragmentami
+     * Import plików GPX, KML, GeoJSON i FIT. Każdy plik to jedna trasa; jego ścieżki `<trk>` stają się fragmentami
      * z rozpoznanym środkiem transportu. Plik z eksportu OpenTraceTrack wraca z tym samym identyfikatorem.
      */
     fun importGpx(uris: List<Uri>): ImportResult {
@@ -171,8 +172,8 @@ class DataPort(private val context: Context, private val db: TrackDb) {
         for (uri in uris) {
             val name = displayName(uri)
             try {
-                val stream = context.contentResolver.openInputStream(uri) ?: error(tr("Nie można otworzyć pliku"))
-                val doc = stream.use { GpxReader.read(it.buffered(), name.substringBeforeLast('.')) }
+                val stream = context.contentResolver.openInputStream(uri) ?: error(tr(R.string.nie_mozna_otworzyc_pliku))
+                val doc = TrackImporter.read(stream.use { it.readBytes() }, name)
                 val segs = doc.tracks.map { t -> TrackDb.ImportedSegment(t.mode, t.segments.flatten()) }
                 val notes = doc.description
                 val id = if (doc.uuid != null) {
@@ -196,10 +197,43 @@ class DataPort(private val context: Context, private val db: TrackDb) {
         tmp.delete()
     }
 
+    /**
+     * Automatyczna kopia bazy do folderu wybranego przez użytkownika (np. zsynchronizowanego z chmurą).
+     * Plik ma stałą nazwę i jest nadpisywany – folder nie rośnie z każdą kopią.
+     */
+    fun autoBackup(tree: Uri) {
+        val tmp = File(context.cacheDir, "autobackup.sqlite")
+        try {
+            db.exportTo(tmp)
+            val treeId = DocumentsContract.getTreeDocumentId(tree)
+            val dir = DocumentsContract.buildDocumentUriUsingTree(tree, treeId)
+            val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, treeId)
+            val existing = context.contentResolver.query(
+                children,
+                arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME),
+                null, null, null,
+            )?.use { c ->
+                var id: String? = null
+                while (c.moveToNext()) if (c.getString(1) == AUTO_BACKUP_NAME) id = c.getString(0)
+                id
+            }
+            val target = existing?.let { DocumentsContract.buildDocumentUriUsingTree(tree, it) }
+                ?: DocumentsContract.createDocument(context.contentResolver, dir, "application/octet-stream", AUTO_BACKUP_NAME)
+                ?: error(tr(R.string.nie_mozna_zapisac_pliku))
+            copyTo(tmp, target)
+        } finally {
+            tmp.delete()
+        }
+    }
+
+    fun folderName(tree: Uri): String = runCatching {
+        DocumentsContract.getTreeDocumentId(tree).substringAfterLast(':').ifBlank { "/" }
+    }.getOrDefault("?")
+
     fun importBackup(source: Uri): TrackDb.MergeResult {
         val tmp = File(context.cacheDir, "import.sqlite")
         context.contentResolver.openInputStream(source)?.use { input -> tmp.outputStream().use { input.copyTo(it) } }
-            ?: error(tr("Nie można otworzyć pliku"))
+            ?: error(tr(R.string.nie_mozna_otworzyc_pliku))
         try {
             return db.mergeFrom(tmp)
         } finally {
@@ -214,6 +248,8 @@ class DataPort(private val context: Context, private val db: TrackDb) {
     }.getOrNull() ?: uri.lastPathSegment?.substringAfterLast('/') ?: "track.gpx"
 
     companion object {
+        const val AUTO_BACKUP_NAME = "OpenTraceTrack-auto-backup.sqlite"
+
         fun backupName(): String = "OpenTraceTrack-" + SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.US).format(Date()) + ".sqlite"
 
         /** „2026-10-18_1405_Trasa_do_pracy” – bez znaków, których nie lubią systemy plików. */

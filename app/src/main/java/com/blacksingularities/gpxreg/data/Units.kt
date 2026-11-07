@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.data
 
+import com.blacksingularities.gpxreg.R
 import com.blacksingularities.gpxreg.i18n.I18n
 import com.blacksingularities.gpxreg.i18n.tr
 import java.text.DateFormat
@@ -12,7 +13,7 @@ import kotlin.math.roundToLong
 
 /** Przeliczanie i formatowanie wartości w wybranym systemie jednostek. */
 class Units(val system: UnitSystem) {
-    private val locale: Locale get() = if (I18n.english) Locale.US else Locale.forLanguageTag("pl-PL")
+    private val locale: Locale get() = I18n.locale
 
     val speedUnit: String
         get() = when (system) {
@@ -86,14 +87,14 @@ class Units(val system: UnitSystem) {
             val m = (s % 3600) / 60
             val sec = s % 60
             return when {
-                !seconds && h > 0 -> tr("{0} h {1} min", h, m)
-                !seconds -> tr("{0} min", m)
+                !seconds && h > 0 -> tr(R.string.x_h_x_min, h, m)
+                !seconds -> tr(R.string.x_min, m)
                 h > 0 -> "%d:%02d:%02d".format(h, m, sec)
                 else -> "%d:%02d".format(m, sec)
             }
         }
 
-        private fun locale(): Locale = if (I18n.english) Locale.US else Locale.forLanguageTag("pl-PL")
+        private fun locale(): Locale = I18n.locale
 
         fun date(time: Long): String = DateFormat.getDateInstance(DateFormat.MEDIUM, locale()).format(Date(time))
         fun dateTime(time: Long): String = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale()).format(Date(time))
@@ -101,7 +102,7 @@ class Units(val system: UnitSystem) {
         fun timeSec(time: Long): String = SimpleDateFormat("HH:mm:ss", locale()).format(Date(time))
 
         /** Domyślna nazwa trasy: „Trasa 18 paź 2026, 14:05”. */
-        fun defaultTrackName(time: Long): String = tr("Trasa {0}", SimpleDateFormat("d MMM yyyy, HH:mm", locale()).format(Date(time)))
+        fun defaultTrackName(time: Long): String = tr(R.string.trasa_x, SimpleDateFormat("d MMM yyyy, HH:mm", locale()).format(Date(time)))
 
         fun bytes(n: Long): String = when {
             n >= 1_048_576 -> String.format(locale(), "%.1f MB", n / 1_048_576.0)

@@ -1,350 +1,96 @@
 package com.blacksingularities.gpxreg.i18n
 
+import android.content.Context
+import android.content.res.Configuration
+import android.content.res.Resources
+import androidx.annotation.PluralsRes
+import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-
-/** Język interfejsu wybrany w ustawieniach. */
-enum class AppLanguage { SYSTEM, PL, EN }
+import com.blacksingularities.gpxreg.R
+import org.xmlpull.v1.XmlPullParser
+import java.util.Locale
 
 /**
- * Lokalizacja jak w OpenPDF: teksty w kodzie są po polsku (klucze), a [En] zawiera ich angielskie
- * odpowiedniki. Szablony {0}, {1}… są zastępowane argumentami. Odczyt języka to stan Compose –
- * zmiana języka od razu odświeża cały interfejs.
+ * Lokalizacja oparta na zasobach Androida: teksty są w `res/values…/strings.xml`.
+ *
+ * Dodanie języka: skopiuj `values/strings.xml` do `values-<kod>/strings.xml`, przetłumacz
+ * i dopisz `<locale android:name="<kod>" />` w `res/xml/locales_config.xml`. Lista języków
+ * w ustawieniach jest czytana z tego pliku, więc nic więcej nie trzeba zmieniać w kodzie.
+ *
+ * Szablony {0}, {1}… są zastępowane argumentami. Zasoby trzymane są w stanie Compose –
+ * zmiana języka od razu odświeża cały interfejs, bez restartu aktywności.
  */
 object I18n {
-    var english by mutableStateOf(false)
+    private lateinit var app: Context
+
+    /** Zasoby w wybranym języku; odczyt w kompozycji subskrybuje zmianę języka. */
+    var res: Resources? by mutableStateOf(null)
         private set
 
-    fun apply(language: AppLanguage, systemLanguage: String) {
-        english = when (language) {
-            AppLanguage.PL -> false
-            AppLanguage.EN -> true
-            AppLanguage.SYSTEM -> systemLanguage != "pl"
-        }
+    /** Wybrany znacznik języka ("" = systemowy). */
+    var selected: String by mutableStateOf("")
+        private set
+
+    val locale: Locale
+        get() = res?.configuration?.locales?.get(0) ?: Locale.getDefault()
+
+    /** Znacznik języka do nazw plików i nagłówków (np. w eksporcie CSV). */
+    val code: String get() = locale.language
+
+    fun init(context: Context) {
+        app = context.applicationContext
     }
 
-    /** Znaczniki języka do nazw plików i nagłówków (np. w eksporcie CSV). */
-    val code: String get() = if (english) "en" else "pl"
+    /** Języki zadeklarowane w `res/xml/locales_config.xml`. */
+    val available: List<String> by lazy {
+        val out = mutableListOf<String>()
+        runCatching {
+            val p = app.resources.getXml(R.xml.locales_config)
+            while (p.next() != XmlPullParser.END_DOCUMENT) {
+                if (p.eventType == XmlPullParser.START_TAG && p.name == "locale") {
+                    p.getAttributeValue("http://schemas.android.com/apk/res/android", "name")?.let { out += it }
+                }
+            }
+        }
+        out.ifEmpty { listOf("en", "pl") }
+    }
+
+    /** Nazwa języka w nim samym, np. „Polski”, „English”, „Deutsch”. */
+    fun displayName(tag: String): String {
+        val l = Locale.forLanguageTag(tag)
+        return l.getDisplayName(l).replaceFirstChar { it.titlecase(l) }
+    }
+
+    /** [tag] pusty = język systemu (na Androidzie 13+ także język wybrany dla aplikacji w systemie). */
+    fun apply(tag: String) {
+        if (!::app.isInitialized) return
+        selected = tag
+        val conf = Configuration(app.resources.configuration)
+        if (tag.isNotBlank()) conf.setLocale(Locale.forLanguageTag(tag))
+        res = app.createConfigurationContext(conf).resources
+    }
+
+    /** Ponowne odczytanie języka systemu, np. po jego zmianie w ustawieniach telefonu. */
+    fun refresh() = apply(selected)
+
+    private fun resources(): Resources? = res ?: if (::app.isInitialized) app.resources else null
+
+    internal fun string(@StringRes id: Int): String = resources()?.getString(id) ?: ""
+
+    internal fun plural(@PluralsRes id: Int, n: Int): String = resources()?.getQuantityString(id, n) ?: ""
 }
 
-fun tr(pl: String, vararg args: Any?): String {
-    val text = if (I18n.english) En[pl] ?: pl else pl
+private fun fill(text: String, args: Array<out Any?>): String {
     if (args.isEmpty()) return text
     var out = text
     args.forEachIndexed { i, a -> out = out.replace("{$i}", a?.toString() ?: "") }
     return out
 }
 
-/** Wszystkie klucze – używane w teście kompletności tłumaczeń. */
-internal val EnglishKeys: Set<String> get() = En.keys
+/** Tekst interfejsu w bieżącym języku; {0}, {1}… zastępowane są kolejnymi argumentami. */
+fun tr(@StringRes id: Int, vararg args: Any?): String = fill(I18n.string(id), args)
 
-private val En: Map<String, String> = hashMapOf(
-    "OpenTraceTrack" to "OpenTraceTrack",
-    "Pieszo" to "Walking",
-    "Wędrówka" to "Hiking",
-    "Bieg" to "Running",
-    "Rower" to "Cycling",
-    "Hulajnoga" to "Scooter",
-    "Motocykl" to "Motorcycle",
-    "Samochód" to "Car",
-    "Autobus" to "Bus",
-    "Tramwaj" to "Tram",
-    "Pociąg" to "Train",
-    "Samolot" to "Plane",
-    "Łódź" to "Boat",
-    "Narty" to "Skiing",
-    "Inne" to "Other",
-    "To nie jest plik bazy SQLite" to "This is not an SQLite database file",
-    "Plik nie jest kopią bazy OpenTraceTrack" to "This file is not an OpenTraceTrack database backup",
-    "{0} h {1} min" to "{0} h {1} min",
-    "{0} min" to "{0} min",
-    "Trasa {0}" to "Track {0}",
-    "Nie znaleziono trasy" to "Track not found",
-    "Udostępnij" to "Share",
-    "Nie można zapisać pliku" to "Cannot save the file",
-    "Nie można otworzyć pliku" to "Cannot open the file",
-    "Znacznik {0}" to "Marker {0}",
-    "Nagrywanie wstrzymane" to "Recording paused",
-    "Postój – automatyczna pauza" to "Stopped – auto-pause",
-    "Nagrywanie trasy · {0}" to "Recording track · {0}",
-    "{0} · {1} · śr. {2}" to "{0} · {1} · avg {2}",
-    "Wznów" to "Resume",
-    "Pauza" to "Pause",
-    "Znacznik" to "Marker",
-    "Nagrywanie trasy" to "Track recording",
-    "Nagrywanie" to "Record",
-    "Trasy" to "Tracks",
-    "Statystyki" to "Statistics",
-    "Trasa zapisana" to "Track saved",
-    "Otwórz" to "Open",
-    "Nagranie odrzucone" to "Recording discarded",
-    "Zmieniono na: {0}" to "Switched to: {0}",
-    "Cofnij" to "Undo",
-    "Nowy fragment: {0}" to "New section: {0}",
-    "Dodano {0}" to "Added {0}",
-    "Nieznany błąd" to "Unknown error",
-    "Trasa" to "Track",
-    "Trasa usunięta" to "Track deleted",
-    "Usunięto trasy: {0}" to "Tracks deleted: {0}",
-    "Fragment podzielony" to "Section split",
-    "Fragmenty połączone" to "Sections merged",
-    "Fragment usunięty" to "Section deleted",
-    "Brak danych do eksportu" to "Nothing to export",
-    "Eksport nieudany: {0}" to "Export failed: {0}",
-    "Zapisano {0}" to "Saved {0}",
-    "Zapisano plików: {0}" to "Files saved: {0}",
-    "Zaimportowano trasy: {0}" to "Tracks imported: {0}",
-    "pominięto (już są): {0}" to "skipped (already there): {0}",
-    "błędne pliki: {0}" to "invalid files: {0}",
-    "Kopia bazy zapisana" to "Database backup saved",
-    "Dodano trasy: {0} · pominięto (już są): {1}" to "Tracks added: {0} · skipped (already there): {1}",
-    "Zezwól OpenTraceTrack na instalowanie aplikacji, potem dotknij „Aktualizuj” ponownie" to "Allow OpenTraceTrack to install apps, then tap “Update” again",
-    "Trwa nagrywanie – zainstaluj aktualizację po jego zakończeniu" to "Recording in progress – install the update when you finish",
-    "Eksport" to "Export",
-    "Format" to "Format",
-    "Standard GPX 1.1 – Strava, Garmin, Komoot, OsmAnd, mapy.cz. Prędkość i kurs w rozszerzeniu Garmin, środek transportu w polu „type”." to "Standard GPX 1.1 – Strava, Garmin, Komoot, OsmAnd, mapy.cz. Speed and course in the Garmin extension, transport mode in the “type” field.",
-    "Dla QGIS, geojson.io i aplikacji webowych. Czasy i prędkości jako tablice we właściwościach." to "For QGIS, geojson.io and web apps. Times and speeds as arrays in the properties.",
-    "Dla Google Earth – z czasem każdego punktu, trasę można odtworzyć na osi czasu." to "For Google Earth – every point keeps its time, so the track can be replayed on a timeline.",
-    "Tabela punktów do Excela lub Arkuszy: czas, współrzędne, wysokość, prędkość, dokładność." to "A table of points for Excel or Sheets: time, coordinates, elevation, speed, accuracy.",
-    "Pliki" to "Files",
-    "Plik na trasę" to "File per track",
-    "Jeden plik" to "One file",
-    "Na fragment" to "Per section",
-    "Na środek" to "Per mode",
-    "Fragmenty jako osobne ścieżki w jednym pliku." to "Sections as separate tracks in one file.",
-    "Każda przesiadka w osobnym pliku, np. rower – pociąg – pieszo." to "Each leg in its own file, e.g. bike – train – walk.",
-    "Wszystkie odcinki jednym środkiem transportu razem, np. cały rower w jednym pliku." to "All legs of one transport mode together, e.g. all cycling in one file.",
-    "Przygotowuję pliki…" to "Preparing files…",
-    "Zapisz" to "Save",
-    "Bez dostępu do lokalizacji nie da się nagrać trasy" to "A track can't be recorded without location access",
-    "Ustawienia" to "Settings",
-    "Lokalizacja w telefonie jest wyłączona" to "Location is turned off on this phone",
-    "Włącz" to "Turn on",
-    "Potrzebny dostęp do lokalizacji" to "Location access needed",
-    "HUD i nagrywanie korzystają z odbiornika GPS telefonu." to "The HUD and recording use the phone's GPS receiver.",
-    "Zezwól" to "Allow",
-    "Lokalizacja jest wyłączona" to "Location is off",
-    "Włącz ją w ustawieniach telefonu, aby zobaczyć prędkość." to "Turn it on in phone settings to see your speed.",
-    "Pokaż moją pozycję" to "Show my position",
-    "Zakończyć nagrywanie?" to "Finish recording?",
-    "Odrzuć" to "Discard",
-    "Zapisz trasę" to "Save track",
-    "{0} w {1}, fragmenty: {2}. Trasa trafi na listę – stamtąd wyeksportujesz ją jako GPX." to "{0} in {1}, sections: {2}. The track goes to your list – export it as GPX from there.",
-    "Oba" to "Both",
-    "Mapa" to "Map",
-    "Odbicie na szybie (lustro)" to "Windshield reflection (mirror)",
-    "Tryb lustrzany: połóż telefon pod szybą – HUD odbije się czytelnie" to "Mirror mode: place the phone under the windshield – the HUD reflects the right way round",
-    "Postój" to "Stopped",
-    "Gotowy" to "Ready",
-    "Nagrywanie zostało przerwane" to "Recording was interrupted",
-    "System zamknął aplikację. Punkty do tej chwili są zapisane." to "The system closed the app. Points up to that moment are saved.",
-    "Zakończ" to "Finish",
-    "Wygląda na: {0}" to "Looks like: {0}",
-    "Od {0} prędkość pasuje do innego środka transportu." to "Since {0} your speed matches a different transport mode.",
-    "Nie zmieniaj" to "Keep current",
-    "Przełącz" to "Switch",
-    "Słaby sygnał GPS – czekam na dokładniejszą pozycję" to "Weak GPS signal – waiting for a more accurate fix",
-    "Dystans" to "Distance",
-    "Czas" to "Time",
-    "Tempo" to "Pace",
-    "Średnia" to "Average",
-    "W górę" to "Ascent",
-    "Środek transportu" to "Transport mode",
-    "Dotknij, aby zmienić" to "Tap to change",
-    "Dodaj znacznik" to "Add marker",
-    "Zablokuj ekran" to "Lock screen",
-    "Rozpocznij nagrywanie" to "Start recording",
-    "Przytrzymaj, aby odblokować" to "Hold to unlock",
-    "Zmień środek transportu" to "Change transport mode",
-    "Czym się poruszasz?" to "How are you travelling?",
-    "Od tej chwili zacznie się nowy fragment – każdy wyeksportujesz jako osobny plik GPX." to "A new section starts now – you can export each one as a separate GPX file.",
-    "Możesz go zmieniać w trakcie nagrywania, np. przy przesiadce z roweru do pociągu." to "You can change it while recording, e.g. when you switch from bike to train.",
-    "Wstecz" to "Back",
-    "Ogólne" to "General",
-    "Język" to "Language",
-    "Systemowy" to "System default",
-    "Jednostki" to "Units",
-    "Metryczne (km/h, m)" to "Metric (km/h, m)",
-    "Imperialne (mph, ft)" to "Imperial (mph, ft)",
-    "Lotnicze / morskie (kn, ft, NM)" to "Aviation / nautical (kn, ft, NM)",
-    "Wibracje" to "Vibration",
-    "Styl" to "Style",
-    "Taśmy i ślad albo duże cyfry" to "Tapes and trail, or big digits",
-    "Lotniczy" to "Aviation",
-    "Prosty" to "Simple",
-    "Styl HUD" to "HUD style",
-    "Kolor symboli" to "Symbol colour",
-    "Poświata" to "Glow",
-    "Blask jak na prawdziwym HUD" to "A bloom like a real HUD",
-    "Ślad ruchu" to "Motion trail",
-    "Droga i wektor 30 s, kierunek w górę" to "Path and 30 s vector, track up",
-    "Ekran zawsze włączony" to "Keep screen on",
-    "Na ekranie nagrywania" to "On the recording screen",
-    "Domyślny środek transportu" to "Default transport mode",
-    "Wykrywanie przesiadek" to "Transport change detection",
-    "Tylko ręcznie" to "Manual only",
-    "Podpowiada, decydujesz Ty" to "Suggests, you decide",
-    "Dzieli trasę sam" to "Splits the track itself",
-    "Wyłączone" to "Off",
-    "Podpowiedzi" to "Suggestions",
-    "Automatycznie" to "Automatic",
-    "Odstęp punktów" to "Point interval",
-    "Krótszy – dokładniejsza trasa, większy plik" to "Shorter – more detailed track, bigger file",
-    "{0} s" to "{0} s",
-    "co {0} s" to "every {0} s",
-    "Filtr dokładności" to "Accuracy filter",
-    "Pozycje mniej dokładne są pomijane" to "Less accurate positions are skipped",
-    "Automatyczna pauza" to "Auto-pause",
-    "Postój nie zawyża czasu i nie dodaje szumu do trasy" to "Stops don't inflate the time or add noise to the track",
-    "Pauza po postoju" to "Pause after stopping for",
-    "Ostrzeżenie o prędkości" to "Speed warning",
-    "Wibracja i czerwony pasek w HUD po przekroczeniu" to "Vibration and a red bar in the HUD when exceeded",
-    "Barometr" to "Barometer",
-    "Dokładniejsza prędkość pionowa i ciśnienie w punktach" to "More accurate vertical speed and pressure in points",
-    "Ten telefon nie ma barometru" to "This phone has no barometer",
-    "Praca w tle" to "Background work",
-    "Wyłącz optymalizację baterii dla OpenTraceTrack, jeśli długie nagrania się przerywają" to "Turn off battery optimisation for OpenTraceTrack if long recordings get interrupted",
-    "Styl mapy" to "Map style",
-    "Ciemna" to "Dark",
-    "Jasna" to "Light",
-    "Ulice (kolorowa)" to "Streets (colour)",
-    "Dane" to "Data",
-    "Importuj pliki GPX" to "Import GPX files",
-    "Z dowolnej aplikacji – typ aktywności zostanie rozpoznany" to "From any app – the activity type is recognised",
-    "Zapisz kopię bazy" to "Save database backup",
-    "Jeden plik SQLite ze wszystkimi trasami – otworzysz go też w DB Browser" to "One SQLite file with all tracks – it also opens in DB Browser",
-    "Wczytaj kopię bazy" to "Load database backup",
-    "Scala trasy z kopią – istniejące nie zostaną zdublowane" to "Merges tracks from the backup – existing ones aren't duplicated",
-    "Aplikacja" to "App",
-    "Aktualizacje" to "Updates",
-    "Sprawdzanie…" to "Checking…",
-    "Masz najnowszą wersję" to "You have the latest version",
-    "Dostępna wersja {0}" to "Version {0} available",
-    "Pobieranie {0}%" to "Downloading {0}%",
-    "Gotowa do instalacji" to "Ready to install",
-    "Instalowanie…" to "Installing…",
-    "Wersja {0}" to "Version {0}",
-    "Sprawdzaj automatycznie" to "Check automatically",
-    "Przy uruchomieniu, najwyżej co 6 godzin" to "On launch, at most every 6 hours",
-    "Kod źródłowy" to "Source code",
-    "Pomysł i wykonanie" to "Idea and development",
-    "Postaw kawę" to "Buy me a coffee",
-    "Wesprzyj rozwój na buycoffee.to" to "Support development on buycoffee.to",
-    "OpenTraceTrack {0} · licencja MIT · mapy © OpenStreetMap, CARTO, OpenFreeMap" to "OpenTraceTrack {0} · MIT licence · maps © OpenStreetMap, CARTO, OpenFreeMap",
-    "Zamknij" to "Close",
-    "7 dni" to "7 days",
-    "30 dni" to "30 days",
-    "Rok" to "Year",
-    "Całość" to "All time",
-    "Brak tras w tym okresie" to "No tracks in this period",
-    "Statystyki policzą się same po pierwszym nagraniu." to "Statistics appear on their own after your first recording.",
-    "W ruchu" to "Moving",
-    "Średnio na trasę" to "Average per track",
-    "Środki transportu" to "Transport modes",
-    "{0} · tras: {1} · maks. {2}" to "{0} · tracks: {1} · max {2}",
-    "Ostatnie 12 miesięcy" to "Last 12 months",
-    "Rekordy" to "Records",
-    "Najdłuższa trasa" to "Longest track",
-    "Najwyższa prędkość" to "Top speed",
-    "Najwyżej" to "Highest point",
-    "Najdłużej w drodze" to "Longest time out",
-    "Zmień nazwę" to "Rename",
-    "Ulubiona" to "Favourite",
-    "Eksportuj" to "Export",
-    "Pomniejsz mapę" to "Shrink map",
-    "Powiększ mapę" to "Expand map",
-    "Średnia w ruchu" to "Moving average",
-    "Maksymalna" to "Maximum",
-    "W dół" to "Descent",
-    "Wysokość" to "Elevation",
-    "Profil" to "Profile",
-    "Prędkość" to "Speed",
-    "Brak danych do wykresu" to "No data for the chart",
-    "Przesuń palcem po wykresie – punkt pokaże się na mapie." to "Drag across the chart – the point shows on the map.",
-    "Fragmenty" to "Sections",
-    "dotknij, aby edytować" to "tap to edit",
-    "Znaczniki" to "Markers",
-    "Usuń trasę" to "Delete track",
-    "Punkty: {0} · ID {1}" to "Points: {0} · ID {1}",
-    "Nazwa trasy" to "Track name",
-    "Usunąć trasę?" to "Delete track?",
-    "Anuluj" to "Cancel",
-    "Usuń" to "Delete",
-    "„{0}” zniknie z bazy razem z punktami i znacznikami." to "“{0}” will be removed from the database with its points and markers.",
-    "Eksport fragmentu: {0}" to "Export section: {0}",
-    "śr. {0}" to "avg {0}",
-    "Fragment {0} z {1}" to "Section {0} of {1}",
-    "Podziel" to "Split",
-    "Połącz z następnym" to "Merge with next",
-    "Eksportuj fragment" to "Export section",
-    "Podział o {0}" to "Split at {0}",
-    "Przesuń suwak – miejsce podziału widać na mapie." to "Move the slider – the split point shows on the map.",
-    "Druga część to:" to "The second part is:",
-    "Podziel tutaj" to "Split here",
-    "Notatki" to "Notes",
-    "Nazwa" to "Name",
-    "Opis" to "Description",
-    "Anuluj zaznaczenie" to "Clear selection",
-    "Zaznaczone: {0}" to "Selected: {0}",
-    "Eksportuj zaznaczone" to "Export selected",
-    "Usuń zaznaczone" to "Delete selected",
-    "Twoje nagrania i zaimportowane pliki" to "Your recordings and imported files",
-    "{0} · razem {1}" to "{0} · {1} in total",
-    "Importuj GPX" to "Import GPX",
-    "Sortowanie" to "Sort",
-    "Od najnowszych" to "Newest first",
-    "Od najstarszych" to "Oldest first",
-    "Od najdłuższych" to "Longest first",
-    "Od najszybszych" to "Fastest first",
-    "Wszystkie" to "All",
-    "Ulubione" to "Favourites",
-    "Usunąć trasy: {0}?" to "Delete {0} tracks?",
-    "Trasy znikną z bazy razem z punktami i znacznikami. Jeśli chcesz je zachować, najpierw wyeksportuj je do GPX." to "The tracks will be removed from the database with their points and markers. To keep them, export them to GPX first.",
-    "Eksport tras: {0}" to "Export tracks: {0}",
-    "Szukaj po nazwie lub notatce" to "Search by name or note",
-    "Wyczyść" to "Clear",
-    "Nic nie pasuje do filtrów" to "Nothing matches the filters",
-    "Nie masz jeszcze tras" to "No tracks yet",
-    "Nagraj pierwszą przejażdżkę albo zaimportuj pliki GPX z innej aplikacji." to "Record your first trip or import GPX files from another app.",
-    "Nagrywaj" to "Record",
-    "Szczegóły aktualizacji" to "Update details",
-    "Pobieranie wersji {0} · {1}%" to "Downloading version {0} · {1}%",
-    "Wersja {0} gotowa do instalacji" to "Version {0} ready to install",
-    "Instalowanie wersji {0}…" to "Installing version {0}…",
-    "Dotknij, aby zaktualizować" to "Tap to update",
-    "Później" to "Later",
-    "Sprawdzanie aktualizacji…" to "Checking for updates…",
-    "Aktualizacja nie powiodła się" to "The update failed",
-    "OpenTraceTrack {0}" to "OpenTraceTrack {0}",
-    "Zainstalowana: {0}" to "Installed: {0}",
-    "Aplikacja została zaktualizowana." to "The app has been updated.",
-    "Pobrano {0} z {1}" to "Downloaded {0} of {1}",
-    "Instalowanie – aplikacja uruchomi się ponownie sama" to "Installing – the app will restart by itself",
-    "Sprawdź ponownie" to "Check again",
-    "Trwa nagrywanie – plik możesz pobrać teraz, a zainstalować po zakończeniu trasy." to "Recording in progress – download now and install after you finish the track.",
-    "Aktualizacja pobierze się i zainstaluje bez dodatkowych pytań. Trasy i ustawienia zostaną." to "The update downloads and installs without further prompts. Your tracks and settings stay.",
-    "Android poprosi o potwierdzenie instalacji. Trasy i ustawienia zostaną." to "Android will ask you to confirm the installation. Your tracks and settings stay.",
-    "Za pierwszym razem Android zapyta o zgodę na instalowanie aplikacji z OpenTraceTrack." to "The first time, Android will ask you to allow OpenTraceTrack to install apps.",
-    "Zainstaluj" to "Install",
-    "Spróbuj ponownie" to "Try again",
-    "Aktualizuj teraz" to "Update now",
-    "Pomiń tę wersję" to "Skip this version",
-    "Zaktualizowano do {0}" to "Updated to {0}",
-    "Super" to "Great",
-    "Kontakt" to "Contact",
-    "Serwer aktualizacji chwilowo ogranicza zapytania – spróbuj za godzinę" to "The update server is rate-limiting requests – try again in an hour",
-    "Serwer odpowiedział kodem {0}" to "The server responded with code {0}",
-    "Pobieranie nie powiodło się ({0})" to "Download failed ({0})",
-    "Nie można zapisać pliku aktualizacji" to "Cannot save the update file",
-    "Pobrany plik jest uszkodzony – spróbuj ponownie" to "The downloaded file is damaged – try again",
-    "Pobrany plik nie jest aktualizacją OpenTraceTrack" to "The downloaded file is not an OpenTraceTrack update",
-    "OpenTraceTrack zaktualizowany do {0}" to "OpenTraceTrack updated to {0}",
-    "Dotknij, aby otworzyć aplikację" to "Tap to open the app",
-    "kod {0}" to "code {0}",
-    "Wersja podpisana innym kluczem – odinstaluj aplikację i zainstaluj nową wersję." to "This version is signed with a different key – uninstall the app and install the new version.",
-    "Aktualizacja nieudana: {0}" to "Update failed: {0}",
-    "Brak połączenia z internetem" to "No internet connection",
-    "Serwer nie odpowiada – spróbuj za chwilę" to "The server isn't responding – try again shortly",
-    "Nie udało się nawiązać bezpiecznego połączenia" to "Couldn't establish a secure connection",
-)
+/** Odmiana przez liczbę (`<plurals>`); {0} to liczba, {1}… kolejne argumenty. */
+fun trp(@PluralsRes id: Int, n: Int, vararg args: Any?): String = fill(I18n.plural(id, n), arrayOf(n, *args))

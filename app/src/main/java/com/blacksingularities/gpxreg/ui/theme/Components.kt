@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -240,11 +241,27 @@ fun SettingRow(
 
 @Composable
 fun ToggleRow(title: String, subtitle: String? = null, icon: ImageVector? = null, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
-    SettingRow(title, subtitle, icon, enabled = enabled, onClick = { onChange(!checked) }, trailing = {
+    // Cały wiersz to jeden przełącznik – czytnik ekranu ogłasza tytuł i stan razem.
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onChange)
+            .graphicsLayer { alpha = if (enabled) 1f else 0.4f }
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) {
+            Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(12.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (subtitle != null) Text(subtitle, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
         Switch(
             modifier = Modifier.height(28.dp).graphicsLayer { scaleX = 0.8f; scaleY = 0.8f },
             checked = checked,
-            onCheckedChange = onChange,
+            onCheckedChange = null,
             enabled = enabled,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Palette.Ink,
@@ -254,7 +271,7 @@ fun ToggleRow(title: String, subtitle: String? = null, icon: ImageVector? = null
                 uncheckedBorderColor = Palette.TextFaint,
             ),
         )
-    })
+    }
 }
 
 /** Wybór jednej z kilku opcji – pigułki w rzędzie, wybrana biała. */

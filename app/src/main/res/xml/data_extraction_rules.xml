@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kopia w chmurze i przenoszenie na nowy telefon (Android 12+): baza tras i ustawienia. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="database" path="gpxreg.db" />
+        <include domain="sharedpref" path="gpxreg_settings.xml" />
+        <include domain="sharedpref" path="route_guide.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="database" path="gpxreg.db" />
+        <include domain="sharedpref" path="gpxreg_settings.xml" />
+        <include domain="sharedpref" path="route_guide.xml" />
+    </device-transfer>
+</data-extraction-rules>

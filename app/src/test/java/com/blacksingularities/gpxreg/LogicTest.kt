@@ -1,7 +1,6 @@
 package com.blacksingularities.gpxreg
 
 import com.blacksingularities.gpxreg.data.TransportMode
-import com.blacksingularities.gpxreg.i18n.EnglishKeys
 import com.blacksingularities.gpxreg.record.ModeDetector
 import com.blacksingularities.gpxreg.update.isNewer
 import com.blacksingularities.gpxreg.update.parseReleases
@@ -11,7 +10,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 class LogicTest {
     @Test
@@ -94,19 +92,5 @@ class LogicTest {
         assertEquals(TransportMode.TRAIN, TransportMode.fromGpxType("train"))
         assertEquals(TransportMode.OTHER, TransportMode.fromGpxType("xyz"))
         TransportMode.entries.forEach { assertEquals(it, TransportMode.fromGpxType(it.gpxType)) }
-    }
-
-    /** Każdy tekst interfejsu `tr("…")` ma angielskie tłumaczenie. */
-    @Test
-    fun everyStringIsTranslated() {
-        val root = listOf(File("src/main/java"), File("app/src/main/java")).first { it.exists() }
-        val pat = Regex("""\btr\(\s*"((?:[^"\\]|\\.)*)"""")
-        val missing = root.walkTopDown()
-            .filter { it.isFile && it.extension == "kt" && it.name != "I18n.kt" }
-            .flatMap { f -> pat.findAll(f.readText()).map { it.groupValues[1].replace("\\\"", "\"").replace("\\$", "$") } }
-            .distinct()
-            .filter { it !in EnglishKeys }
-            .toList()
-        assertTrue("Brak tłumaczeń: $missing", missing.isEmpty())
     }
 }

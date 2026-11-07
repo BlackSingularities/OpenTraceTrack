@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.data
 
+import com.blacksingularities.gpxreg.R
 import com.blacksingularities.gpxreg.i18n.tr
 
 /**
@@ -30,20 +31,20 @@ enum class TransportMode(
 
     val label: String
         get() = when (this) {
-            WALK -> tr("Pieszo")
-            HIKE -> tr("Wędrówka")
-            RUN -> tr("Bieg")
-            BIKE -> tr("Rower")
-            SCOOTER -> tr("Hulajnoga")
-            MOTORCYCLE -> tr("Motocykl")
-            CAR -> tr("Samochód")
-            BUS -> tr("Autobus")
-            TRAM -> tr("Tramwaj")
-            TRAIN -> tr("Pociąg")
-            PLANE -> tr("Samolot")
-            BOAT -> tr("Łódź")
-            SKI -> tr("Narty")
-            OTHER -> tr("Inne")
+            WALK -> tr(R.string.pieszo)
+            HIKE -> tr(R.string.wedrowka)
+            RUN -> tr(R.string.bieg)
+            BIKE -> tr(R.string.rower)
+            SCOOTER -> tr(R.string.hulajnoga)
+            MOTORCYCLE -> tr(R.string.motocykl)
+            CAR -> tr(R.string.samochod)
+            BUS -> tr(R.string.autobus)
+            TRAM -> tr(R.string.tramwaj)
+            TRAIN -> tr(R.string.pociag)
+            PLANE -> tr(R.string.samolot)
+            BOAT -> tr(R.string.lodz)
+            SKI -> tr(R.string.narty)
+            OTHER -> tr(R.string.inne)
         }
 
     companion object {

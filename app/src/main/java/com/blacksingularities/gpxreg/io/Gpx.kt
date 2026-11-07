@@ -218,7 +218,7 @@ object GpxReader {
         return GpxImport(name, h.metaDesc, h.uuid, tracks, h.waypoints)
     }
 
-    private fun fixTimes(tracks: List<GpxImport.Trk>, metaTime: Long?): List<GpxImport.Trk> {
+    internal fun fixTimes(tracks: List<GpxImport.Trk>, metaTime: Long?): List<GpxImport.Trk> {
         val noTime = tracks.all { t -> t.segments.all { s -> s.all { it.time == 0L } } }
         var clock = metaTime ?: System.currentTimeMillis()
         return tracks.map { t ->

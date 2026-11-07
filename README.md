@@ -35,13 +35,18 @@ Najnowsza wersja jest zawsze w **[Releases → Latest](../../releases/latest)**.
 - **Wykrywanie przesiadek** po prędkości: podpowiedź albo automatyczny podział, cofnięty do chwili, gdy zmiana faktycznie nastąpiła.
 - Automatyczna pauza na postojach, filtr dokładności, odstęp punktów 1–10 s, barometr, ostrzeżenie o przekroczeniu prędkości.
 - Nagranie przerwane przez system można wznowić – punkty zapisują się do bazy na bieżąco.
+- Głośne ostrzeżenie, gdy w trakcie nagrania wyłączysz lokalizację, i podpowiedź, gdy aplikacja ma tylko przybliżoną lokalizację.
+- Przewodnik „Praca w tle” z krokami dla Twojego telefonu (Xiaomi, Samsung, Huawei, Oppo, Vivo…), żeby system nie przerywał długich nagrań.
+- **Start bez otwierania aplikacji**: kafelek w szybkich ustawieniach, widżet na ekranie głównym i skróty na ikonie aplikacji.
+- **Jedź tą trasą**: wybrana trasa (nagrana lub zaimportowana) jest rysowana na mapie nagrywania, widać odchylenie i dystans do końca, a po zjechaniu z trasy telefon wibruje.
 
 ### Trasy
 - Mapa (MapLibre; podkład ciemny, jasny lub kolorowy) z trasą w kolorach środków transportu.
 - Statystyki, profil prędkości i wysokości – przesuwasz palcem po wykresie, punkt pokazuje się na mapie.
 - Edycja fragmentów: zmiana środka transportu, podział w wybranym miejscu, łączenie, usuwanie.
 - Znaczniki z nazwą i opisem, notatki, ulubione, wyszukiwanie, filtry, sortowanie, zaznaczanie wielu tras.
-- Statystyki ogólne: okresy, środki transportu, ostatnie 12 miesięcy, rekordy.
+- Statystyki ogólne: okresy, środki transportu, ostatnie 12 miesięcy, rekordy i **mapa cieplna** wszystkich tras.
+- **Mapy offline**: okolicę trasy pobierzesz jednym dotknięciem, a już oglądane kafelki zostają w pamięci (do 256 MB) – mapa działa w terenie bez zasięgu.
 
 ### Eksport i dane
 | Format | Zawartość |
@@ -53,9 +58,22 @@ Najnowsza wersja jest zawsze w **[Releases → Latest](../../releases/latest)**.
 
 Podział przy eksporcie: **jeden plik**, **plik na fragment** (każda przesiadka osobno) albo **plik na środek transportu** (np. cały rower razem).
 
-**Import GPX** z dowolnej aplikacji – także przez „Otwórz w” / „Udostępnij”. Typ aktywności jest rozpoznawany, brakujące prędkości wyliczane. Plik wyeksportowany z OpenTraceTrack wraca 1:1 i nie dubluje się.
+**Import GPX, KML, GeoJSON i FIT** (zegarki i liczniki Garmin, Wahoo, Coros, Suunto) z dowolnej aplikacji – także przez „Otwórz w” / „Udostępnij”. Typ aktywności jest rozpoznawany, brakujące prędkości wyliczane. Plik wyeksportowany z OpenTraceTrack wraca 1:1 i nie dubluje się.
 
-**Baza** to zwykły plik SQLite z czytelnym schematem (`tracks`, `segments`, `points`, `waypoints`, `meta`; czas w ms UTC, wartości w jednostkach SI). Kopia zapasowa to jeden plik, który otworzysz też w DB Browser for SQLite. Wczytanie kopii scala trasy po UUID – istniejące są pomijane.
+**Baza** to zwykły plik SQLite z czytelnym schematem (`tracks`, `segments`, `points`, `waypoints`, `meta`; czas w ms UTC, wartości w jednostkach SI). Kopia zapasowa to jeden plik, który otworzysz też w DB Browser for SQLite. Wczytanie kopii scala trasy po UUID – istniejące są pomijane. **Automatyczna kopia** trafia do wybranego folderu (np. synchronizowanego z chmurą) po każdym nagraniu, codziennie albo co tydzień. Schemat bazy ma numerowane migracje, więc aktualizacje aplikacji nie tracą danych.
+
+## Prywatność
+
+Trasy, znaczniki i ustawienia są tylko w telefonie – bez konta, analityki i reklam. Lokalizacja w tle działa wyłącznie podczas nagrania (z widocznym powiadomieniem). Internet służy tylko do kafelków mapy i sprawdzania aktualizacji. Po awarii dziennik błędów zostaje w telefonie i to Ty decydujesz, czy go udostępnić. Szczegóły i licencje: Ustawienia → O aplikacji.
+
+## Tłumaczenia
+
+Teksty interfejsu są w zwykłych zasobach Androida: `app/src/main/res/values/strings.xml` (angielski, domyślny) i `values-pl/strings.xml` (polski). Nowy język:
+
+1. Skopiuj `values/strings.xml` do `values-<kod>/strings.xml` (np. `values-de`) i przetłumacz teksty. `{0}`, `{1}` to miejsca na wartości – zostaw je bez zmian. Bloki `<plurals>` mają formy zależne od liczby (dla danego języka np. `one`, `few`, `many`, `other`).
+2. Dopisz `<locale android:name="<kod>" />` w `app/src/main/res/xml/locales_config.xml`.
+
+Język pojawi się sam w Ustawieniach i w systemowym wyborze języka aplikacji (Android 13+) – kod nie wymaga zmian.
 
 ## Architektura
 
@@ -64,10 +82,11 @@ app/src/main/java/com/blacksingularities/gpxreg/
   data/     modele, baza SQLite (TrackDb), statystyki (StatsAccumulator), ustawienia, jednostki
   record/   LocationHub (GNSS bez Usług Google), SensorHub (horyzont, barometr), Telemetry,
             Recorder (filtr, autopauza, fragmenty), ModeDetector, RecordingService
-  io/       GPX (zapis/odczyt), GeoJSON, KML, CSV, DataPort (pliki, udostępnianie, kopia bazy)
+  io/       GPX (zapis/odczyt), GeoJSON, KML, CSV, import KML/GeoJSON/FIT, DataPort (pliki, kopie bazy)
   update/   aktualizacje z GitHub Releases (PackageInstaller)
   ui/       Compose: HUD (Canvas), mapa (MapLibre), ekrany, motyw
-  i18n/     teksty po polsku jako klucze + słownik angielski
+  widget/   widżet ekranu głównego, kafelek szybkich ustawień, skróty
+  i18n/     wybór języka i odczyt tekstów z res/values*/strings.xml
 ```
 
 Kotlin · Jetpack Compose · Material 3 · MapLibre Native · bez Usług Google Play.
@@ -96,10 +115,14 @@ Wydania podpisuje CI kluczem z sekretów repozytorium (`SIGNING_KEYSTORE_BASE64`
 - **Recording** in the background with a notification, auto-pause, accuracy filter, barometer, speed warning, and recovery after the system kills the app.
 - **Multiple transport modes in one recording** (14 modes). Switching starts a new section. Speed-based detection can suggest a switch or split automatically, back-dated to the moment the change actually happened.
 - **Track details**: map coloured by mode, statistics, speed/elevation profile linked to the map, section editing (change mode, split, merge, delete), markers, notes.
-- **Export** to GPX 1.1, GeoJSON, KML or CSV – as one file, one file per section or one file per transport mode. **Import** GPX from any app.
+- **Export** to GPX 1.1, GeoJSON, KML or CSV – as one file, one file per section or one file per transport mode. **Import** GPX, KML, GeoJSON and FIT from any app.
+- **Follow a route**: any saved or imported track is drawn on the recording map with distance off-route and to the end; the phone vibrates when you leave it.
+- **Offline maps** for the area around a track, a heat map of all your tracks, a home-screen widget, a Quick Settings tile and launcher shortcuts.
+- **Automatic backup** to a folder of your choice (e.g. one synced with the cloud).
 - **Database**: a plain, documented SQLite file. Backup is a single file; restoring merges tracks by UUID without duplicates.
 - **In-app updates** from GitHub Releases, with the change notes of every version you skipped.
-- Polish and English UI (follows the system language or set it in Settings).
+- Polish and English UI (follows the system language or set it in Settings). New languages are plain Android `strings.xml` files – see *Tłumaczenia* above.
+- **Privacy**: everything stays on the phone, no account, no analytics; the network is used only for map tiles and update checks.
 
 Download the APK from **[Releases → Latest](../../releases/latest)** (Android 10+).
 

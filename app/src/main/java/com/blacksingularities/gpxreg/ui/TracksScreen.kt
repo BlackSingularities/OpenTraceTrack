@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.ui
 
+import com.blacksingularities.gpxreg.R
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -112,31 +113,31 @@ fun TracksScreen(vm: AppViewModel) {
         // Nagłówek albo pasek zaznaczenia.
         Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 10.dp, top = 10.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             if (selecting) {
-                RoundIcon(Icons.Rounded.Close, tr("Anuluj zaznaczenie"), size = 40.dp) { selected = emptySet() }
-                Text(tr("Zaznaczone: {0}", selected.size), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(start = 12.dp))
-                RoundIcon(Icons.Rounded.FileDownload, tr("Eksportuj zaznaczone"), size = 40.dp) { exportIds = selected.toList() }
+                RoundIcon(Icons.Rounded.Close, tr(R.string.anuluj_zaznaczenie), size = 40.dp) { selected = emptySet() }
+                Text(tr(R.string.zaznaczone_x, selected.size), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(start = 12.dp))
+                RoundIcon(Icons.Rounded.FileDownload, tr(R.string.eksportuj_zaznaczone), size = 40.dp) { exportIds = selected.toList() }
                 Spacer(Modifier.width(8.dp))
-                RoundIcon(Icons.Rounded.Delete, tr("Usuń zaznaczone"), size = 40.dp, background = Palette.Record) { confirmDelete = true }
+                RoundIcon(Icons.Rounded.Delete, tr(R.string.usun_zaznaczone), size = 40.dp, background = Palette.Record) { confirmDelete = true }
             } else {
                 Column(Modifier.weight(1f)) {
-                    Text(tr("Trasy"), color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black)
+                    Text(tr(R.string.trasy), color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black)
                     val totalDist = tracks.filter { !it.recording }.sumOf { it.stats.distance }
                     Text(
-                        if (tracks.isEmpty()) tr("Twoje nagrania i zaimportowane pliki") else tr("{0} · razem {1}", tracks.count { !it.recording }, units.fmtDist(totalDist)),
+                        if (tracks.isEmpty()) tr(R.string.twoje_nagrania_i_zaimportowane_pliki) else tr(R.string.x_razem_x, tracks.count { !it.recording }, units.fmtDist(totalDist)),
                         color = Palette.TextDim,
                         fontSize = 13.sp,
                     )
                 }
-                RoundIcon(Icons.Rounded.FileUpload, tr("Importuj GPX"), size = 40.dp) { platform.pickGpx() }
+                RoundIcon(Icons.Rounded.FileUpload, tr(R.string.importuj_gpx), size = 40.dp) { platform.pickGpx() }
                 Spacer(Modifier.width(8.dp))
-                RoundIcon(Icons.AutoMirrored.Rounded.Sort, tr("Sortowanie"), size = 40.dp) {
+                RoundIcon(Icons.AutoMirrored.Rounded.Sort, tr(R.string.sortowanie), size = 40.dp) {
                     sort = Sort.entries[(sort.ordinal + 1) % Sort.entries.size]
                     vm.snack(
                         when (sort) {
-                            Sort.NEWEST -> tr("Od najnowszych")
-                            Sort.OLDEST -> tr("Od najstarszych")
-                            Sort.LONGEST -> tr("Od najdłuższych")
-                            Sort.FASTEST -> tr("Od najszybszych")
+                            Sort.NEWEST -> tr(R.string.od_najnowszych)
+                            Sort.OLDEST -> tr(R.string.od_najstarszych)
+                            Sort.LONGEST -> tr(R.string.od_najdluzszych)
+                            Sort.FASTEST -> tr(R.string.od_najszybszych)
                         },
                     )
                 }
@@ -151,11 +152,11 @@ fun TracksScreen(vm: AppViewModel) {
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                FilterChip(tr("Wszystkie"), modeFilter == null && !favOnly) {
+                FilterChip(tr(R.string.wszystkie), modeFilter == null && !favOnly) {
                     modeFilter = null
                     favOnly = false
                 }
-                FilterChip(tr("Ulubione"), favOnly, icon = { Icon(Icons.Rounded.Star, null, tint = if (favOnly) Palette.Ink else Palette.Warn, modifier = Modifier.size(15.dp)) }) { favOnly = !favOnly }
+                FilterChip(tr(R.string.ulubione), favOnly, icon = { Icon(Icons.Rounded.Star, null, tint = if (favOnly) Palette.Ink else Palette.Warn, modifier = Modifier.size(15.dp)) }) { favOnly = !favOnly }
                 presentModes.forEach { m ->
                     FilterChip(m.label, modeFilter == m, icon = { Icon(m.icon, null, tint = if (modeFilter == m) Palette.Ink else m.tint, modifier = Modifier.size(15.dp)) }) {
                         modeFilter = if (modeFilter == m) null else m
@@ -194,19 +195,19 @@ fun TracksScreen(vm: AppViewModel) {
 
     if (confirmDelete) {
         DarkDialog(
-            tr("Usunąć trasy: {0}?", selected.size),
+            tr(R.string.usunac_trasy_x, selected.size),
             onDismiss = { confirmDelete = false },
             icon = Icons.Rounded.Delete,
             buttons = {
-                PillButton(tr("Anuluj"), primary = false) { confirmDelete = false }
-                PillButton(tr("Usuń"), danger = true) {
+                PillButton(tr(R.string.anuluj), primary = false) { confirmDelete = false }
+                PillButton(tr(R.string.usun), danger = true) {
                     vm.delete(selected)
                     selected = emptySet()
                     confirmDelete = false
                 }
             },
         ) {
-            Text(tr("Trasy znikną z bazy razem z punktami i znacznikami. Jeśli chcesz je zachować, najpierw wyeksportuj je do GPX."), color = Palette.TextDim, fontSize = 14.sp, lineHeight = 20.sp)
+            Text(tr(R.string.trasy_znikna_z_bazy_razem_z), color = Palette.TextDim, fontSize = 14.sp, lineHeight = 20.sp)
         }
     }
 
@@ -217,7 +218,7 @@ fun TracksScreen(vm: AppViewModel) {
             trackIds = ids,
             segments = chosen.sumOf { it.segments.size },
             modes = chosen.flatMap { t -> t.segments.map { it.mode } }.distinct().size,
-            title = tr("Eksport tras: {0}", ids.size),
+            title = tr(R.string.eksport_tras_x, ids.size),
             onDismiss = {
                 exportIds = null
                 selected = emptySet()
@@ -235,7 +236,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Mod
         Icon(Icons.Rounded.Search, null, tint = Palette.TextDim, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f)) {
-            if (value.isEmpty()) Text(tr("Szukaj po nazwie lub notatce"), color = Palette.TextFaint, fontSize = 15.sp)
+            if (value.isEmpty()) Text(tr(R.string.szukaj_po_nazwie_lub_notatce), color = Palette.TextFaint, fontSize = 15.sp)
             BasicTextField(
                 value,
                 onChange,
@@ -245,7 +246,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Mod
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        if (value.isNotEmpty()) Icon(Icons.Rounded.Close, tr("Wyczyść"), tint = Palette.TextDim, modifier = Modifier.size(20.dp).press { onChange("") })
+        if (value.isNotEmpty()) Icon(Icons.Rounded.Close, tr(R.string.wyczysc), tint = Palette.TextDim, modifier = Modifier.size(20.dp).press { onChange("") })
     }
 }
 
@@ -337,7 +338,7 @@ private fun EmptyTracks(hasAny: Boolean, onImport: () -> Unit, onRecord: () -> U
         Icon(if (hasAny) Icons.Rounded.Search else Icons.Rounded.Route, null, tint = Palette.TextDim, modifier = Modifier.size(44.dp))
         Spacer(Modifier.height(14.dp))
         Text(
-            if (hasAny) tr("Nic nie pasuje do filtrów") else tr("Nie masz jeszcze tras"),
+            if (hasAny) tr(R.string.nic_nie_pasuje_do_filtrow) else tr(R.string.nie_masz_jeszcze_tras),
             color = Color.White,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
@@ -346,7 +347,7 @@ private fun EmptyTracks(hasAny: Boolean, onImport: () -> Unit, onRecord: () -> U
         Spacer(Modifier.height(6.dp))
         if (!hasAny) {
             Text(
-                tr("Nagraj pierwszą przejażdżkę albo zaimportuj pliki GPX z innej aplikacji."),
+                tr(R.string.nagraj_pierwsza_przejazdzke_albo_zaimportuj),
                 color = Palette.TextDim,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
@@ -354,8 +355,8 @@ private fun EmptyTracks(hasAny: Boolean, onImport: () -> Unit, onRecord: () -> U
             )
             Spacer(Modifier.height(18.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PillButton(tr("Importuj GPX"), primary = false, icon = Icons.Rounded.FileUpload, onClick = onImport)
-                PillButton(tr("Nagrywaj"), icon = Icons.Rounded.FiberManualRecord, onClick = onRecord)
+                PillButton(tr(R.string.importuj_gpx), primary = false, icon = Icons.Rounded.FileUpload, onClick = onImport)
+                PillButton(tr(R.string.nagrywaj), icon = Icons.Rounded.FiberManualRecord, onClick = onRecord)
             }
         }
     }

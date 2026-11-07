@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.update
 
+import com.blacksingularities.gpxreg.R
 import com.blacksingularities.gpxreg.BuildConfig
 import com.blacksingularities.gpxreg.i18n.tr
 import org.json.JSONArray
@@ -83,8 +84,8 @@ fun isNewer(remote: String, local: String): Boolean {
 
 /** Komunikat błędu sieci zrozumiały dla użytkownika. */
 fun friendlyError(e: Throwable): String = when (e) {
-    is java.net.UnknownHostException -> tr("Brak połączenia z internetem")
-    is java.net.SocketTimeoutException -> tr("Serwer nie odpowiada – spróbuj za chwilę")
-    is javax.net.ssl.SSLException -> tr("Nie udało się nawiązać bezpiecznego połączenia")
-    else -> e.message ?: tr("Nieznany błąd")
+    is java.net.UnknownHostException -> tr(R.string.brak_polaczenia_z_internetem)
+    is java.net.SocketTimeoutException -> tr(R.string.serwer_nie_odpowiada_sprobuj_za_chwile)
+    is javax.net.ssl.SSLException -> tr(R.string.nie_udalo_sie_nawiazac_bezpiecznego_polaczen)
+    else -> e.message ?: tr(R.string.nieznany_blad)
 }

@@ -1,7 +1,6 @@
 package com.blacksingularities.gpxreg.data
 
 import android.content.Context
-import com.blacksingularities.gpxreg.i18n.AppLanguage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +25,8 @@ enum class MapStyle(val url: String) {
 enum class RecordView { HUD, SPLIT, MAP }
 
 data class AppSettings(
-    val language: AppLanguage = AppLanguage.SYSTEM,
+    /** Znacznik języka (np. "pl", "en"); pusty = język systemu. */
+    val language: String = "",
     val units: UnitSystem = UnitSystem.METRIC,
     val hudColor: HudColor = HudColor.WHITE,
     val hudStyle: HudStyle = HudStyle.AVIATION,
@@ -54,6 +54,13 @@ data class AppSettings(
     val seenVersion: String = "",
     /** Wersja pominięta przez użytkownika („Pomiń tę wersję”). */
     val skippedVersion: String = "",
+    /** Folder (drzewo SAF) na automatyczną kopię bazy; pusty – wyłączona. */
+    val autoBackupUri: String = "",
+    /** Co ile dni robić automatyczną kopię (0 – po każdym zapisanym nagraniu). */
+    val autoBackupDays: Int = 1,
+    val lastAutoBackup: Long = 0,
+    /** Ekran powitalny już pokazany. */
+    val onboarded: Boolean = false,
 )
 
 /** Ustawienia w SharedPreferences, udostępniane jako StateFlow dla interfejsu i usługi. */
@@ -75,7 +82,12 @@ class SettingsStore(context: Context) {
     private fun load(): AppSettings {
         val d = AppSettings()
         return AppSettings(
-            language = enumOf("language", d.language),
+            language = when (val l = prefs.getString("language", null)) {
+                null, "SYSTEM" -> ""
+                "PL" -> "pl"
+                "EN" -> "en"
+                else -> l
+            },
             units = enumOf("units", d.units),
             hudColor = enumOf("hudColor", d.hudColor),
             hudStyle = enumOf("hudStyle", d.hudStyle),
@@ -97,12 +109,17 @@ class SettingsStore(context: Context) {
             autoUpdate = prefs.getBoolean("autoUpdate", d.autoUpdate),
             seenVersion = prefs.getString("seenVersion", d.seenVersion) ?: "",
             skippedVersion = prefs.getString("skippedVersion", d.skippedVersion) ?: "",
+            autoBackupUri = prefs.getString("autoBackupUri", d.autoBackupUri) ?: "",
+            autoBackupDays = prefs.getInt("autoBackupDays", d.autoBackupDays),
+            lastAutoBackup = prefs.getLong("lastAutoBackup", d.lastAutoBackup),
+            // Kto już używał aplikacji (są inne ustawienia), nie musi oglądać powitania.
+            onboarded = prefs.getBoolean("onboarded", prefs.contains("units")),
         )
     }
 
     private fun save(s: AppSettings) {
         prefs.edit()
-            .putString("language", s.language.name)
+            .putString("language", s.language)
             .putString("units", s.units.name)
             .putString("hudColor", s.hudColor.name)
             .putString("hudStyle", s.hudStyle.name)
@@ -124,6 +141,10 @@ class SettingsStore(context: Context) {
             .putBoolean("autoUpdate", s.autoUpdate)
             .putString("seenVersion", s.seenVersion)
             .putString("skippedVersion", s.skippedVersion)
+            .putString("autoBackupUri", s.autoBackupUri)
+            .putInt("autoBackupDays", s.autoBackupDays)
+            .putLong("lastAutoBackup", s.lastAutoBackup)
+            .putBoolean("onboarded", s.onboarded)
             .apply()
     }
 }

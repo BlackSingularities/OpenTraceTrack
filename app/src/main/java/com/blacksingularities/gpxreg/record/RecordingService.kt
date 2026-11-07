@@ -86,6 +86,37 @@ class RecordingService : Service() {
                 .distinctUntilChanged()
                 .collectLatest { update() }
         }
+        // Lokalizacja wyłączona w trakcie nagrywania – głośne ostrzeżenie, bo punkty przestają przychodzić.
+        scope.launch {
+            LocationHub.gnss
+                .map { it.enabled }
+                .distinctUntilChanged()
+                .collect { enabled -> gpsAlert(!enabled && Recorder.state.value.active) }
+        }
+    }
+
+    private fun gpsAlert(show: Boolean) {
+        val nm = getSystemService(NotificationManager::class.java) ?: return
+        if (!show) {
+            nm.cancel(ALERT_ID)
+            return
+        }
+        val pi = PendingIntent.getActivity(
+            this,
+            ALERT_ID,
+            Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val n = Notification.Builder(this, ALERT_CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(tr(R.string.gps_off_title))
+            .setContentText(tr(R.string.gps_off_text))
+            .setStyle(Notification.BigTextStyle().bigText(tr(R.string.gps_off_text)))
+            .setContentIntent(pi)
+            .setAutoCancel(true)
+            .setCategory(Notification.CATEGORY_ERROR)
+            .build()
+        runCatching { nm.notify(ALERT_ID, n) }
     }
 
     private fun goForeground() {
@@ -109,12 +140,12 @@ class RecordingService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val title = when (s.status) {
-            RecStatus.PAUSED -> tr("Nagrywanie wstrzymane")
-            RecStatus.AUTO_PAUSED -> tr("Postój – automatyczna pauza")
-            else -> tr("Nagrywanie trasy · {0}", s.mode.label)
+            RecStatus.PAUSED -> tr(R.string.nagrywanie_wstrzymane)
+            RecStatus.AUTO_PAUSED -> tr(R.string.postoj_automatyczna_pauza)
+            else -> tr(R.string.nagrywanie_trasy_x, s.mode.label)
         }
         val text = tr(
-            "{0} · {1} · śr. {2}",
+            R.string.x_x_sr_x,
             units.fmtDist(s.total.distance),
             Units.duration(s.elapsed),
             units.fmtSpeed(s.total.avgMovingSpeed),
@@ -129,11 +160,11 @@ class RecordingService : Service() {
             .setCategory(Notification.CATEGORY_SERVICE)
             .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
         if (s.status == RecStatus.PAUSED) {
-            b.addAction(action(ACTION_RESUME, tr("Wznów")))
+            b.addAction(action(ACTION_RESUME, tr(R.string.wznow)))
         } else if (s.active) {
-            b.addAction(action(ACTION_PAUSE, tr("Pauza")))
+            b.addAction(action(ACTION_PAUSE, tr(R.string.pauza)))
         }
-        if (s.active) b.addAction(action(ACTION_WAYPOINT, tr("Znacznik")))
+        if (s.active) b.addAction(action(ACTION_WAYPOINT, tr(R.string.znacznik)))
         return b.build()
     }
 
@@ -148,6 +179,7 @@ class RecordingService : Service() {
     }
 
     override fun onDestroy() {
+        runCatching { getSystemService(NotificationManager::class.java)?.cancel(ALERT_ID) }
         if (acquired) {
             LocationHub.release(OWNER)
             SensorHub.release(OWNER)
@@ -165,6 +197,8 @@ class RecordingService : Service() {
         const val ACTION_REFRESH = "gpxreg.REFRESH"
         private const val CHANNEL = "recording"
         private const val NOTIFICATION_ID = 1201
+        private const val ALERT_CHANNEL = "alerts"
+        private const val ALERT_ID = 1202
         private const val OWNER = "service"
 
         @Volatile
@@ -173,9 +207,12 @@ class RecordingService : Service() {
         fun ensureChannel(context: Context) {
             val nm = context.getSystemService(NotificationManager::class.java) ?: return
             nm.createNotificationChannel(
-                NotificationChannel(CHANNEL, tr("Nagrywanie trasy"), NotificationManager.IMPORTANCE_LOW).apply {
+                NotificationChannel(CHANNEL, tr(R.string.nagrywanie_trasy), NotificationManager.IMPORTANCE_LOW).apply {
                     setShowBadge(false)
                 },
+            )
+            nm.createNotificationChannel(
+                NotificationChannel(ALERT_CHANNEL, tr(R.string.alerts_channel), NotificationManager.IMPORTANCE_HIGH),
             )
         }
 

@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.ui
 
+import com.blacksingularities.gpxreg.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -85,10 +86,10 @@ fun StatsScreen(vm: AppViewModel) {
     val inPeriod = remember(tracks, since) { tracks.filter { !it.recording && it.startTime >= since } }
 
     Column(Modifier.fillMaxSize().background(Palette.Ink).verticalScroll(rememberScrollState()).padding(horizontal = 14.dp)) {
-        Text(tr("Statystyki"), color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 10.dp, start = 4.dp))
+        Text(tr(R.string.statystyki), color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 10.dp, start = 4.dp))
         Spacer(Modifier.height(12.dp))
         Segmented(
-            listOf(Period.WEEK to tr("7 dni"), Period.MONTH to tr("30 dni"), Period.YEAR to tr("Rok"), Period.ALL to tr("Całość")),
+            listOf(Period.WEEK to tr(R.string.s_7_dni), Period.MONTH to tr(R.string.s_30_dni), Period.YEAR to tr(R.string.rok), Period.ALL to tr(R.string.calosc)),
             period,
             Modifier.fillMaxWidth(),
         ) { period = it }
@@ -97,8 +98,8 @@ fun StatsScreen(vm: AppViewModel) {
             Column(Modifier.fillMaxWidth().padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Rounded.Insights, null, tint = Palette.TextDim, modifier = Modifier.size(44.dp))
                 Spacer(Modifier.height(12.dp))
-                Text(tr("Brak tras w tym okresie"), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text(tr("Statystyki policzą się same po pierwszym nagraniu."), color = Palette.TextDim, fontSize = 13.sp, textAlign = TextAlign.Center)
+                Text(tr(R.string.brak_tras_w_tym_okresie), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Text(tr(R.string.statystyki_policza_sie_same_po_pierwszym), color = Palette.TextDim, fontSize = 13.sp, textAlign = TextAlign.Center)
             }
             return@Column
         }
@@ -106,21 +107,39 @@ fun StatsScreen(vm: AppViewModel) {
         // Suma.
         Spacer(Modifier.height(18.dp))
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-            Metric(tr("Dystans"), units.fmtDist(inPeriod.sumOf { it.stats.distance }), Modifier.weight(1f), big = true)
-            Metric(tr("W ruchu"), Units.duration(inPeriod.sumOf { it.stats.movingTime }, seconds = false), Modifier.weight(1f), big = true)
-            Metric(tr("Trasy"), inPeriod.size.toString(), Modifier.weight(0.6f), big = true)
+            Metric(tr(R.string.dystans), units.fmtDist(inPeriod.sumOf { it.stats.distance }), Modifier.weight(1f), big = true)
+            Metric(tr(R.string.w_ruchu), Units.duration(inPeriod.sumOf { it.stats.movingTime }, seconds = false), Modifier.weight(1f), big = true)
+            Metric(tr(R.string.trasy), inPeriod.size.toString(), Modifier.weight(0.6f), big = true)
         }
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-            Metric(tr("W górę"), units.fmtAlt(inPeriod.sumOf { it.stats.ascent }), Modifier.weight(1f))
-            Metric(tr("Średnio na trasę"), units.fmtDist(inPeriod.sumOf { it.stats.distance } / inPeriod.size), Modifier.weight(1f))
+            Metric(tr(R.string.w_gore), units.fmtAlt(inPeriod.sumOf { it.stats.ascent }), Modifier.weight(1f))
+            Metric(tr(R.string.srednio_na_trase), units.fmtDist(inPeriod.sumOf { it.stats.distance } / inPeriod.size), Modifier.weight(1f))
             Spacer(Modifier.weight(0.6f))
+        }
+
+        // Mapa cieplna: wszystkie trasy okresu półprzezroczyste – często uczęszczane drogi jaśnieją.
+        val heat = remember(inPeriod) { inPeriod.filter { it.preview.size > 1 }.map { com.blacksingularities.gpxreg.ui.map.MapLine(0xFFFF8A3D, it.preview) } }
+        if (heat.isNotEmpty()) {
+            Spacer(Modifier.height(22.dp))
+            Text(tr(R.string.heatmap_title), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            Text(com.blacksingularities.gpxreg.i18n.trp(R.plurals.tracks_on_map, heat.size), color = Palette.TextDim, fontSize = 12.sp, modifier = Modifier.padding(start = 4.dp))
+            Spacer(Modifier.height(10.dp))
+            Box(Modifier.fillMaxWidth().height(260.dp).clip(RoundedCornerShape(22.dp))) {
+                com.blacksingularities.gpxreg.ui.map.TrackMap(
+                    styleUrl = settings.mapStyle.url,
+                    lines = heat,
+                    modifier = Modifier.fillMaxSize(),
+                    fitKey = heat.size to period,
+                    faint = true,
+                )
+            }
         }
 
         // Środki transportu.
         if (byMode.isNotEmpty()) {
             Spacer(Modifier.height(22.dp))
-            Text(tr("Środki transportu"), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            Text(tr(R.string.srodki_transportu), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
             Spacer(Modifier.height(10.dp))
             val maxD = byMode.maxOf { it.distance }.coerceAtLeast(1.0)
             Column(
@@ -142,7 +161,7 @@ fun StatsScreen(vm: AppViewModel) {
                             }
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                tr("{0} · tras: {1} · maks. {2}", Units.duration(m.movingTime, seconds = false), m.tracks, units.fmtSpeed(m.maxSpeed, 0)),
+                                tr(R.string.x_tras_x_maks_x, Units.duration(m.movingTime, seconds = false), m.tracks, units.fmtSpeed(m.maxSpeed, 0)),
                                 color = Palette.TextDim,
                                 fontSize = 11.sp,
                             )
@@ -155,10 +174,10 @@ fun StatsScreen(vm: AppViewModel) {
         // Miesiące.
         if (monthly.isNotEmpty()) {
             Spacer(Modifier.height(22.dp))
-            Text(tr("Ostatnie 12 miesięcy"), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            Text(tr(R.string.ostatnie_12_miesiecy), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
             Spacer(Modifier.height(10.dp))
             val keyFmt = SimpleDateFormat("yyyy-MM", Locale.US)
-            val labelFmt = SimpleDateFormat("LLLLL", if (I18n.english) Locale.US else Locale.forLanguageTag("pl-PL"))
+            val labelFmt = SimpleDateFormat("LLLLL", I18n.locale)
             val months = (11 downTo 0).map { back ->
                 val c = Calendar.getInstance().apply {
                     set(Calendar.DAY_OF_MONTH, 1)
@@ -173,14 +192,14 @@ fun StatsScreen(vm: AppViewModel) {
 
         // Rekordy.
         Spacer(Modifier.height(22.dp))
-        Text(tr("Rekordy"), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+        Text(tr(R.string.rekordy), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
         Spacer(Modifier.height(10.dp))
         val all = tracks.filter { !it.recording }
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Palette.PanelHigh)) {
-            all.maxByOrNull { it.stats.distance }?.let { RecordRow(vm, Icons.Rounded.Straighten, tr("Najdłuższa trasa"), units.fmtDist(it.stats.distance), it) }
-            all.maxByOrNull { it.stats.maxSpeed }?.let { RecordRow(vm, Icons.Rounded.Speed, tr("Najwyższa prędkość"), units.fmtSpeed(it.stats.maxSpeed, 0), it) }
-            all.filter { it.stats.maxEle != null }.maxByOrNull { it.stats.maxEle!! }?.let { RecordRow(vm, Icons.Rounded.Height, tr("Najwyżej"), units.fmtAlt(it.stats.maxEle), it) }
-            all.maxByOrNull { it.stats.duration }?.let { RecordRow(vm, Icons.Rounded.Timer, tr("Najdłużej w drodze"), Units.duration(it.stats.duration, seconds = false), it) }
+            all.maxByOrNull { it.stats.distance }?.let { RecordRow(vm, Icons.Rounded.Straighten, tr(R.string.najdluzsza_trasa), units.fmtDist(it.stats.distance), it) }
+            all.maxByOrNull { it.stats.maxSpeed }?.let { RecordRow(vm, Icons.Rounded.Speed, tr(R.string.najwyzsza_predkosc), units.fmtSpeed(it.stats.maxSpeed, 0), it) }
+            all.filter { it.stats.maxEle != null }.maxByOrNull { it.stats.maxEle!! }?.let { RecordRow(vm, Icons.Rounded.Height, tr(R.string.najwyzej), units.fmtAlt(it.stats.maxEle), it) }
+            all.maxByOrNull { it.stats.duration }?.let { RecordRow(vm, Icons.Rounded.Timer, tr(R.string.najdluzej_w_drodze), Units.duration(it.stats.duration, seconds = false), it) }
         }
         Spacer(Modifier.height(30.dp))
     }

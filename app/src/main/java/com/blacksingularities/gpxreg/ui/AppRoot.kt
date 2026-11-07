@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.ui
 
+import com.blacksingularities.gpxreg.R
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -63,8 +64,9 @@ import kotlinx.coroutines.delay
 fun AppRoot(vm: AppViewModel) {
     // Odczyt stanu języka – zmiana w ustawieniach przerysowuje cały interfejs.
     @Suppress("UNUSED_VARIABLE")
-    val english = I18n.english
+    val language = I18n.res
     val rec by Recorder.state.collectAsStateWithLifecycle()
+    val settings by vm.settings.collectAsStateWithLifecycle()
     var snack by remember { mutableStateOf<Snack?>(null) }
     LaunchedEffect(Unit) {
         vm.snacks.collect { snack = it }
@@ -103,6 +105,11 @@ fun AppRoot(vm: AppViewModel) {
             enter = slideInHorizontally { it } + fadeIn(),
             exit = slideOutHorizontally { it } + fadeOut(),
         ) { SettingsScreen(vm) }
+        AnimatedVisibility(
+            vm.aboutOpen,
+            enter = slideInHorizontally { it } + fadeIn(),
+            exit = slideOutHorizontally { it } + fadeOut(),
+        ) { AboutScreen(vm) }
 
         // Komunikat na dole ekranu.
         AnimatedVisibility(
@@ -139,6 +146,7 @@ fun AppRoot(vm: AppViewModel) {
         }
     }
 
+    if (!settings.onboarded) OnboardingDialog(vm)
     if (vm.updateSheet) UpdateSheet(vm)
     vm.whatsNew?.let { (v, notes) -> WhatsNewDialog(v, notes) { vm.whatsNew = null } }
 }
@@ -153,9 +161,9 @@ private fun BottomBar(tab: Tab, recording: Boolean, onSelect: (Tab) -> Unit) {
             .padding(horizontal = 6.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        NavItem(Icons.Rounded.Speed, tr("Nagrywanie"), tab == Tab.RECORD, Modifier.weight(1f), dot = recording && tab != Tab.RECORD) { onSelect(Tab.RECORD) }
-        NavItem(Icons.Rounded.Route, tr("Trasy"), tab == Tab.TRACKS, Modifier.weight(1f)) { onSelect(Tab.TRACKS) }
-        NavItem(Icons.Rounded.BarChart, tr("Statystyki"), tab == Tab.STATS, Modifier.weight(1f)) { onSelect(Tab.STATS) }
+        NavItem(Icons.Rounded.Speed, tr(R.string.nagrywanie), tab == Tab.RECORD, Modifier.weight(1f), dot = recording && tab != Tab.RECORD) { onSelect(Tab.RECORD) }
+        NavItem(Icons.Rounded.Route, tr(R.string.trasy), tab == Tab.TRACKS, Modifier.weight(1f)) { onSelect(Tab.TRACKS) }
+        NavItem(Icons.Rounded.BarChart, tr(R.string.statystyki), tab == Tab.STATS, Modifier.weight(1f)) { onSelect(Tab.STATS) }
     }
 }
 

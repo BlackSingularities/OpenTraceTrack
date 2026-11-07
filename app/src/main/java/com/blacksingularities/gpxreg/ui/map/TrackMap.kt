@@ -42,6 +42,7 @@ private const val SRC_ME = "gpxreg-me"
 private const val SRC_WPT = "gpxreg-wpt"
 private const val SRC_CURSOR = "gpxreg-cursor"
 private const val SRC_ENDS = "gpxreg-ends"
+private const val SRC_GUIDE = "gpxreg-guide"
 
 /**
  * Mapa MapLibre z trasą. [fitKey] – po zmianie kamera obejmuje całą trasę; [follow] – kamera
@@ -60,6 +61,10 @@ fun TrackMap(
     waypoints: List<LatLon> = emptyList(),
     showEnds: Boolean = false,
     bottomPadding: Int = 0,
+    /** Trasa wzorcowa („jedź tą trasą”) – przerywana linia pod nagraniem. */
+    guide: List<LatLon> = emptyList(),
+    /** Półprzezroczyste linie bez obwódki – nakładające się trasy jaśnieją jak na mapie cieplnej. */
+    faint: Boolean = false,
 ) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -93,6 +98,8 @@ fun TrackMap(
 
     LaunchedEffect(styleUrl) { holder.setStyle(styleUrl) }
     LaunchedEffect(holder.styleVersion, lines) { holder.setLines(lines, showEnds) }
+    LaunchedEffect(holder.styleVersion, faint) { holder.setFaint(faint) }
+    LaunchedEffect(holder.styleVersion, guide) { holder.setGuide(guide) }
     LaunchedEffect(holder.styleVersion, me) { holder.setMe(me) }
     LaunchedEffect(holder.styleVersion, waypoints) { holder.setWaypoints(waypoints) }
     LaunchedEffect(holder.styleVersion, cursor) { holder.setCursor(cursor) }
@@ -146,11 +153,22 @@ private class MapHolder(context: Context) {
     }
 
     private fun addLayers(s: Style) {
+        s.addSource(org.maplibre.android.style.sources.GeoJsonSource(SRC_GUIDE))
         s.addSource(org.maplibre.android.style.sources.GeoJsonSource(SRC_LINES))
         s.addSource(org.maplibre.android.style.sources.GeoJsonSource(SRC_ENDS))
         s.addSource(org.maplibre.android.style.sources.GeoJsonSource(SRC_WPT))
         s.addSource(org.maplibre.android.style.sources.GeoJsonSource(SRC_CURSOR))
         s.addSource(org.maplibre.android.style.sources.GeoJsonSource(SRC_ME))
+        s.addLayer(
+            LineLayer("gpxreg-guide", SRC_GUIDE).withProperties(
+                PropertyFactory.lineColor(AColor.WHITE),
+                PropertyFactory.lineWidth(5f),
+                PropertyFactory.lineOpacity(0.7f),
+                PropertyFactory.lineDasharray(arrayOf(1.2f, 1.2f)),
+                PropertyFactory.lineCap(Property.LINE_CAP_BUTT),
+                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
+            ),
+        )
         // Ciemna obwódka pod linią – trasa czytelna na każdym podkładzie.
         s.addLayer(
             LineLayer("gpxreg-lines-casing", SRC_LINES).withProperties(
@@ -237,6 +255,21 @@ private class MapHolder(context: Context) {
         } else {
             endSrc.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
         }
+    }
+
+    fun setFaint(faint: Boolean) {
+        val s = style ?: return
+        s.getLayer("gpxreg-lines-casing")?.setProperties(PropertyFactory.lineOpacity(if (faint) 0f else 0.55f))
+        s.getLayer("gpxreg-lines")?.setProperties(
+            PropertyFactory.lineOpacity(if (faint) 0.32f else 1f),
+            PropertyFactory.lineWidth(if (faint) 3f else 4.5f),
+        )
+    }
+
+    fun setGuide(points: List<LatLon>) {
+        val src = source(SRC_GUIDE) ?: return
+        val f = if (points.size > 1) listOf(Feature.fromGeometry(LineString.fromLngLats(points.map { Point.fromLngLat(it.lon, it.lat) }))) else emptyList()
+        src.setGeoJson(FeatureCollection.fromFeatures(f))
     }
 
     fun setMe(me: LatLon?) {

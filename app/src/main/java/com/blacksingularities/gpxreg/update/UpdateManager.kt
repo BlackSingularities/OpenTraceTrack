@@ -47,8 +47,8 @@ object UpdateManager {
             setRequestProperty("User-Agent", "OpenTraceTrack/" + BuildConfig.VERSION_NAME)
         }
         try {
-            if (conn.responseCode == 403) error(tr("Serwer aktualizacji chwilowo ogranicza zapytania – spróbuj za godzinę"))
-            if (conn.responseCode != 200) error(tr("Serwer odpowiedział kodem {0}", conn.responseCode))
+            if (conn.responseCode == 403) error(tr(R.string.serwer_aktualizacji_chwilowo_ogranicza_zapyt))
+            if (conn.responseCode != 200) error(tr(R.string.serwer_odpowiedzial_kodem_x, conn.responseCode))
             return conn.inputStream.bufferedReader().use { it.readText() }
         } finally {
             conn.disconnect()
@@ -67,7 +67,7 @@ object UpdateManager {
             setRequestProperty("User-Agent", "OpenTraceTrack/" + BuildConfig.VERSION_NAME)
         }
         try {
-            if (conn.responseCode !in 200..299) error(tr("Pobieranie nie powiodło się ({0})", conn.responseCode))
+            if (conn.responseCode !in 200..299) error(tr(R.string.pobieranie_nie_powiodlo_sie_x, conn.responseCode))
             val total = conn.contentLengthLong.takeIf { it > 0 } ?: info.sizeBytes
             conn.inputStream.use { input ->
                 part.outputStream().use { out ->
@@ -87,7 +87,7 @@ object UpdateManager {
                     }
                 }
             }
-            if (!part.renameTo(target)) error(tr("Nie można zapisać pliku aktualizacji"))
+            if (!part.renameTo(target)) error(tr(R.string.nie_mozna_zapisac_pliku_aktualizacji))
             verifyApk(context, target)
             onProgress(1f, target.length())
             target
@@ -102,11 +102,11 @@ object UpdateManager {
         val expected = context.packageName
         if (info == null) {
             file.delete()
-            error(tr("Pobrany plik jest uszkodzony – spróbuj ponownie"))
+            error(tr(R.string.pobrany_plik_jest_uszkodzony_sprobuj_ponowni))
         }
         if (info.packageName != expected && info.packageName + ".debug" != expected) {
             file.delete()
-            error(tr("Pobrany plik nie jest aktualizacją OpenTraceTrack"))
+            error(tr(R.string.pobrany_plik_nie_jest_aktualizacja_opentrace))
         }
     }
 
@@ -183,12 +183,12 @@ object UpdateManager {
             return
         }
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
-        nm.createNotificationChannel(NotificationChannel(CHANNEL, tr("Aktualizacje"), NotificationManager.IMPORTANCE_HIGH))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL, tr(R.string.aktualizacje), NotificationManager.IMPORTANCE_HIGH))
         val pending = PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val n = Notification.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(tr("OpenTraceTrack zaktualizowany do {0}", BuildConfig.VERSION_NAME))
-            .setContentText(tr("Dotknij, aby otworzyć aplikację"))
+            .setContentTitle(tr(R.string.opentracetrack_zaktualizowany_do_x, BuildConfig.VERSION_NAME))
+            .setContentText(tr(R.string.dotknij_aby_otworzyc_aplikacje))
             .setContentIntent(pending)
             .setAutoCancel(true)
             .build()
@@ -218,14 +218,14 @@ class UpdateReceiver : BroadcastReceiver() {
             }
             PackageInstaller.STATUS_SUCCESS -> UpdateManager.relaunchAfterUpdate(context)
             else -> {
-                val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: tr("kod {0}", status)
+                val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: tr(R.string.kod_x, status)
                 if (status != PackageInstaller.STATUS_FAILURE_ABORTED) {
                     val hint = if (status == PackageInstaller.STATUS_FAILURE_CONFLICT || status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE) {
-                        tr("Wersja podpisana innym kluczem – odinstaluj aplikację i zainstaluj nową wersję.")
+                        tr(R.string.wersja_podpisana_innym_kluczem_odinstaluj_ap)
                     } else {
                         msg
                     }
-                    Toast.makeText(context, tr("Aktualizacja nieudana: {0}", hint), Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, tr(R.string.aktualizacja_nieudana_x, hint), Toast.LENGTH_LONG).show()
                 }
             }
         }

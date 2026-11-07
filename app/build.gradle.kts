@@ -63,8 +63,10 @@ android {
         buildConfig = true
     }
     lint {
+        // Lint sprawdza każde wydanie i zapisuje raport (app/build/reports/lint-results-*.html),
+        // ale go nie blokuje – problemy widać w raporcie, zamiast przechodzić niezauważone.
+        checkReleaseBuilds = true
         abortOnError = false
-        checkReleaseBuilds = false
     }
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"

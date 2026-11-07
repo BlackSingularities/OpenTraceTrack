@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.ui
 
+import com.blacksingularities.gpxreg.R
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -78,7 +79,7 @@ fun UpdateBanner(vm: AppViewModel, modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(22.dp))
                 .background(Color.White)
-                .press(label = tr("Szczegóły aktualizacji")) { vm.updateSheet = true }
+                .press(label = tr(R.string.szczegoly_aktualizacji)) { vm.updateSheet = true }
                 .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -87,17 +88,17 @@ fun UpdateBanner(vm: AppViewModel, modifier: Modifier = Modifier) {
                 Column(Modifier.weight(1f)) {
                     Text(
                         when (u) {
-                            is UpdateState.Downloading -> tr("Pobieranie wersji {0} · {1}%", info.version, (u.progress * 100).roundToInt())
-                            is UpdateState.Ready -> tr("Wersja {0} gotowa do instalacji", info.version)
-                            is UpdateState.Installing -> tr("Instalowanie wersji {0}…", info.version)
-                            else -> tr("Dostępna wersja {0}", info.version)
+                            is UpdateState.Downloading -> tr(R.string.pobieranie_wersji_x_x, info.version, (u.progress * 100).roundToInt())
+                            is UpdateState.Ready -> tr(R.string.wersja_x_gotowa_do_instalacji, info.version)
+                            is UpdateState.Installing -> tr(R.string.instalowanie_wersji_x, info.version)
+                            else -> tr(R.string.dostepna_wersja_x, info.version)
                         },
                         color = Palette.Ink,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        tr("Dotknij, aby zaktualizować"),
+                        tr(R.string.dotknij_aby_zaktualizowac),
                         color = Palette.Ink.copy(alpha = 0.6f),
                         fontSize = 12.sp,
                         maxLines = 1,
@@ -107,7 +108,7 @@ fun UpdateBanner(vm: AppViewModel, modifier: Modifier = Modifier) {
                 if (u is UpdateState.Available) {
                     Icon(
                         Icons.Rounded.Close,
-                        tr("Później"),
+                        tr(R.string.pozniej),
                         tint = Palette.Ink.copy(alpha = 0.6f),
                         modifier = Modifier.size(36.dp).clip(CircleShape).press { vm.bannerHidden = true }.padding(8.dp),
                     )
@@ -166,10 +167,10 @@ fun UpdateSheet(vm: AppViewModel) {
                 Column(Modifier.weight(1f)) {
                     Text(
                         when (u) {
-                            UpdateState.Checking -> tr("Sprawdzanie aktualizacji…")
-                            UpdateState.UpToDate -> tr("Masz najnowszą wersję")
-                            is UpdateState.Failed -> tr("Aktualizacja nie powiodła się")
-                            else -> if (info != null) tr("OpenTraceTrack {0}", info.version) else tr("Aktualizacje")
+                            UpdateState.Checking -> tr(R.string.sprawdzanie_aktualizacji)
+                            UpdateState.UpToDate -> tr(R.string.masz_najnowsza_wersje)
+                            is UpdateState.Failed -> tr(R.string.aktualizacja_nie_powiodla_sie)
+                            else -> if (info != null) tr(R.string.opentracetrack_x, info.version) else tr(R.string.aktualizacje)
                         },
                         color = Color.White,
                         fontSize = 20.sp,
@@ -177,9 +178,9 @@ fun UpdateSheet(vm: AppViewModel) {
                     )
                     Text(
                         if (info != null) {
-                            tr("Zainstalowana: {0}", UpdateManager.currentVersion) + (if (info.sizeBytes > 0) " · " + Units.bytes(info.sizeBytes) else "")
+                            tr(R.string.zainstalowana_x, UpdateManager.currentVersion) + (if (info.sizeBytes > 0) " · " + Units.bytes(info.sizeBytes) else "")
                         } else {
-                            tr("Zainstalowana: {0}", UpdateManager.currentVersion)
+                            tr(R.string.zainstalowana_x, UpdateManager.currentVersion)
                         },
                         color = Palette.TextDim,
                         fontSize = 13.sp,
@@ -204,33 +205,33 @@ fun UpdateSheet(vm: AppViewModel) {
                             )
                             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    tr("Pobrano {0} z {1}", Units.bytes(s.bytes), Units.bytes(s.info.sizeBytes)),
+                                    tr(R.string.pobrano_x_z_x, Units.bytes(s.bytes), Units.bytes(s.info.sizeBytes)),
                                     color = Palette.TextDim,
                                     fontSize = 13.sp,
                                     modifier = Modifier.weight(1f),
                                 )
-                                PillButton(tr("Anuluj"), primary = false) { vm.cancelDownload() }
+                                PillButton(tr(R.string.anuluj), primary = false) { vm.cancelDownload() }
                             }
                         }
                         is UpdateState.Installing -> Row(verticalAlignment = Alignment.CenterVertically) {
                             CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
                             Spacer(Modifier.width(12.dp))
-                            Text(tr("Instalowanie – aplikacja uruchomi się ponownie sama"), color = Color.White, fontSize = 14.sp)
+                            Text(tr(R.string.instalowanie_aplikacja_uruchomi_sie_ponownie), color = Color.White, fontSize = 14.sp)
                         }
                         UpdateState.Checking -> Row(verticalAlignment = Alignment.CenterVertically) {
                             CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
                             Spacer(Modifier.width(12.dp))
-                            Text(tr("Sprawdzanie aktualizacji…"), color = Color.White, fontSize = 14.sp)
+                            Text(tr(R.string.sprawdzanie_aktualizacji), color = Color.White, fontSize = 14.sp)
                         }
-                        UpdateState.UpToDate, UpdateState.Idle -> PillButton(tr("Sprawdź ponownie"), Modifier.fillMaxWidth(), primary = false) { vm.checkUpdate() }
+                        UpdateState.UpToDate, UpdateState.Idle -> PillButton(tr(R.string.sprawdz_ponownie), Modifier.fillMaxWidth(), primary = false) { vm.checkUpdate() }
                         else -> {
                             val recording = Recorder.state.value.active
                             Text(
                                 when {
-                                    recording -> tr("Trwa nagrywanie – plik możesz pobrać teraz, a zainstalować po zakończeniu trasy.")
-                                    UpdateManager.canInstallSilently(context) -> tr("Aktualizacja pobierze się i zainstaluje bez dodatkowych pytań. Trasy i ustawienia zostaną.")
-                                    UpdateManager.canInstall(context) -> tr("Android poprosi o potwierdzenie instalacji. Trasy i ustawienia zostaną.")
-                                    else -> tr("Za pierwszym razem Android zapyta o zgodę na instalowanie aplikacji z OpenTraceTrack.")
+                                    recording -> tr(R.string.trwa_nagrywanie_plik_mozesz_pobrac_teraz)
+                                    UpdateManager.canInstallSilently(context) -> tr(R.string.aktualizacja_pobierze_sie_i_zainstaluje_bez)
+                                    UpdateManager.canInstall(context) -> tr(R.string.android_poprosi_o_potwierdzenie_instalacji_t)
+                                    else -> tr(R.string.za_pierwszym_razem_android_zapyta_o)
                                 },
                                 color = Palette.TextDim,
                                 fontSize = 12.sp,
@@ -239,18 +240,18 @@ fun UpdateSheet(vm: AppViewModel) {
                             Spacer(Modifier.height(12.dp))
                             PillButton(
                                 when (s) {
-                                    is UpdateState.Ready -> tr("Zainstaluj")
-                                    is UpdateState.Failed -> tr("Spróbuj ponownie")
-                                    else -> tr("Aktualizuj teraz")
+                                    is UpdateState.Ready -> tr(R.string.zainstaluj)
+                                    is UpdateState.Failed -> tr(R.string.sprobuj_ponownie)
+                                    else -> tr(R.string.aktualizuj_teraz)
                                 },
                                 Modifier.fillMaxWidth(),
                                 icon = Icons.Rounded.SystemUpdate,
                             ) { vm.downloadAndInstall() }
                             Spacer(Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                PillButton(tr("Później"), Modifier.weight(1f), primary = false) { vm.later() }
+                                PillButton(tr(R.string.pozniej), Modifier.weight(1f), primary = false) { vm.later() }
                                 if (s is UpdateState.Available) {
-                                    PillButton(tr("Pomiń tę wersję"), Modifier.weight(1f), primary = false) { vm.skipVersion() }
+                                    PillButton(tr(R.string.pomin_te_wersje), Modifier.weight(1f), primary = false) { vm.skipVersion() }
                                 }
                             }
                         }
@@ -265,11 +266,11 @@ fun UpdateSheet(vm: AppViewModel) {
 @Composable
 fun WhatsNewDialog(version: String, @Suppress("UNUSED_PARAMETER") notes: String, onDismiss: () -> Unit) {
     DarkDialog(
-        tr("Zaktualizowano do {0}", version),
+        tr(R.string.zaktualizowano_do_x, version),
         onDismiss = onDismiss,
         icon = Icons.Rounded.NewReleases,
-        buttons = { PillButton(tr("Super"), onClick = onDismiss) },
+        buttons = { PillButton(tr(R.string.super), onClick = onDismiss) },
     ) {
-        Text(tr("Aplikacja została zaktualizowana."), color = Palette.TextDim, fontSize = 14.sp)
+        Text(tr(R.string.aplikacja_zostala_zaktualizowana), color = Palette.TextDim, fontSize = 14.sp)
     }
 }

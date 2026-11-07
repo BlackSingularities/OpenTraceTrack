@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.record
 
+import com.blacksingularities.gpxreg.R
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -239,7 +240,7 @@ object Recorder {
         val p = synchronized(lock) { lastAccepted } ?: Telemetry.state.value.takeIf { it.hasFix }?.let {
             TrackPoint(it.time, it.lat, it.lon, it.alt)
         } ?: return
-        val label = name?.takeIf { it.isNotBlank() } ?: tr("Znacznik {0}", s.waypoints + 1)
+        val label = name?.takeIf { it.isNotBlank() } ?: tr(R.string.znacznik_x, s.waypoints + 1)
         scope.launch(io) {
             db.addWaypoint(s.trackId, p.time, p.lat, p.lon, p.ele, label)
             publish { it.copy(waypoints = it.waypoints + 1) }

@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.ui
 
+import com.blacksingularities.gpxreg.R
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -129,20 +130,20 @@ fun TrackDetailScreen(vm: AppViewModel, trackId: Long) {
         Column(Modifier.fillMaxSize()) {
             // Pasek tytułu.
             Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                RoundIcon(Icons.AutoMirrored.Rounded.ArrowBack, tr("Wstecz"), size = 40.dp) { vm.openTrack = null }
-                Column(Modifier.weight(1f).padding(horizontal = 12.dp).press(label = tr("Zmień nazwę")) { renaming = true }) {
+                RoundIcon(Icons.AutoMirrored.Rounded.ArrowBack, tr(R.string.wstecz), size = 40.dp) { vm.openTrack = null }
+                Column(Modifier.weight(1f).padding(horizontal = 12.dp).press(label = tr(R.string.zmien_nazwe)) { renaming = true }) {
                     Text(t.name, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(Units.dateTime(t.startTime) + " – " + Units.time(t.endTime), color = Palette.TextDim, fontSize = 12.sp, maxLines = 1)
                 }
-                RoundIcon(if (t.favorite) Icons.Rounded.Star else Icons.Rounded.StarBorder, tr("Ulubiona"), size = 40.dp, tint = if (t.favorite) Palette.Warn else null) { vm.toggleFavorite(t) }
+                RoundIcon(if (t.favorite) Icons.Rounded.Star else Icons.Rounded.StarBorder, tr(R.string.ulubiona), size = 40.dp, tint = if (t.favorite) Palette.Warn else null) { vm.toggleFavorite(t) }
                 Spacer(Modifier.width(6.dp))
-                RoundIcon(Icons.Rounded.FileDownload, tr("Eksportuj"), size = 40.dp, active = true) { exporting = true }
+                RoundIcon(Icons.Rounded.FileDownload, tr(R.string.eksportuj), size = 40.dp, active = true) { exporting = true }
             }
 
             if (bigMap) {
                 Box(Modifier.weight(1f).fillMaxWidth().padding(10.dp).clip(RoundedCornerShape(24.dp))) {
                     TrackMap(settings.mapStyle.url, lines, Modifier.fillMaxSize(), fitKey = "big$trackId", cursor = cursorPoint, waypoints = d.waypoints.map { LatLon(it.lat, it.lon) }, showEnds = true)
-                    RoundIcon(Icons.Rounded.FullscreenExit, tr("Pomniejsz mapę"), Modifier.align(Alignment.BottomEnd).padding(10.dp), size = 42.dp, background = Palette.Ink) { bigMap = false }
+                    RoundIcon(Icons.Rounded.FullscreenExit, tr(R.string.pomniejsz_mape), Modifier.align(Alignment.BottomEnd).padding(10.dp), size = 42.dp, background = Palette.Ink) { bigMap = false }
                 }
                 return@Column
             }
@@ -150,31 +151,32 @@ fun TrackDetailScreen(vm: AppViewModel, trackId: Long) {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) {
                 Box(Modifier.fillMaxWidth().height(280.dp).clip(RoundedCornerShape(24.dp))) {
                     TrackMap(settings.mapStyle.url, lines, Modifier.fillMaxSize(), fitKey = trackId, cursor = cursorPoint, waypoints = d.waypoints.map { LatLon(it.lat, it.lon) }, showEnds = true)
-                    RoundIcon(Icons.Rounded.Fullscreen, tr("Powiększ mapę"), Modifier.align(Alignment.BottomEnd).padding(10.dp), size = 42.dp, background = Palette.Ink) { bigMap = true }
+                    RoundIcon(Icons.Rounded.Fullscreen, tr(R.string.powieksz_mape), Modifier.align(Alignment.BottomEnd).padding(10.dp), size = 42.dp, background = Palette.Ink) { bigMap = true }
                 }
+                TrackTools(vm, d, settings.mapStyle.url)
 
                 // Podsumowanie.
                 val s = t.stats
                 Spacer(Modifier.height(16.dp))
                 FlowRow(Modifier.fillMaxWidth().padding(horizontal = 4.dp), maxItemsInEachRow = 3, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Metric(tr("Dystans"), units.fmtDist(s.distance), Modifier.weight(1f), big = true)
-                    Metric(tr("Czas"), Units.duration(s.duration), Modifier.weight(1f), big = true)
-                    Metric(tr("W ruchu"), Units.duration(s.movingTime), Modifier.weight(1f), big = true)
-                    Metric(tr("Średnia w ruchu"), units.num(units.speed(s.avgMovingSpeed), 1), Modifier.weight(1f), unit = units.speedUnit)
-                    Metric(tr("Maksymalna"), units.num(units.speed(s.maxSpeed), 1), Modifier.weight(1f), unit = units.speedUnit)
-                    Metric(tr("Tempo"), units.fmtPace(s.avgMovingSpeed), Modifier.weight(1f))
-                    Metric(tr("W górę"), units.alt(s.ascent).roundToInt().toString(), Modifier.weight(1f), unit = units.altUnit)
-                    Metric(tr("W dół"), units.alt(s.descent).roundToInt().toString(), Modifier.weight(1f), unit = units.altUnit)
-                    Metric(tr("Wysokość"), if (s.minEle != null && s.maxEle != null) "${units.alt(s.minEle).roundToInt()}–${units.alt(s.maxEle).roundToInt()}" else "–", Modifier.weight(1f), unit = units.altUnit)
+                    Metric(tr(R.string.dystans), units.fmtDist(s.distance), Modifier.weight(1f), big = true)
+                    Metric(tr(R.string.czas), Units.duration(s.duration), Modifier.weight(1f), big = true)
+                    Metric(tr(R.string.w_ruchu), Units.duration(s.movingTime), Modifier.weight(1f), big = true)
+                    Metric(tr(R.string.srednia_w_ruchu), units.num(units.speed(s.avgMovingSpeed), 1), Modifier.weight(1f), unit = units.speedUnit)
+                    Metric(tr(R.string.maksymalna), units.num(units.speed(s.maxSpeed), 1), Modifier.weight(1f), unit = units.speedUnit)
+                    Metric(tr(R.string.tempo), units.fmtPace(s.avgMovingSpeed), Modifier.weight(1f))
+                    Metric(tr(R.string.w_gore), units.alt(s.ascent).roundToInt().toString(), Modifier.weight(1f), unit = units.altUnit)
+                    Metric(tr(R.string.w_dol), units.alt(s.descent).roundToInt().toString(), Modifier.weight(1f), unit = units.altUnit)
+                    Metric(tr(R.string.wysokosc), if (s.minEle != null && s.maxEle != null) "${units.alt(s.minEle).roundToInt()}–${units.alt(s.maxEle).roundToInt()}" else "–", Modifier.weight(1f), unit = units.altUnit)
                 }
 
                 // Wykres.
                 Spacer(Modifier.height(20.dp))
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Palette.PanelHigh).padding(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(tr("Profil"), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text(tr(R.string.profil), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                         Segmented(
-                            listOf(ChartKind.SPEED to tr("Prędkość"), ChartKind.ELEVATION to tr("Wysokość")),
+                            listOf(ChartKind.SPEED to tr(R.string.predkosc), ChartKind.ELEVATION to tr(R.string.wysokosc)),
                             chart,
                             Modifier.width(210.dp),
                         ) {
@@ -184,7 +186,7 @@ fun TrackDetailScreen(vm: AppViewModel, trackId: Long) {
                     }
                     Spacer(Modifier.height(10.dp))
                     if (profile.size < 2) {
-                        Text(tr("Brak danych do wykresu"), color = Palette.TextDim, fontSize = 13.sp, modifier = Modifier.padding(16.dp))
+                        Text(tr(R.string.brak_danych_do_wykresu), color = Palette.TextDim, fontSize = 13.sp, modifier = Modifier.padding(16.dp))
                     } else {
                         ProfileChart(
                             profile,
@@ -193,15 +195,15 @@ fun TrackDetailScreen(vm: AppViewModel, trackId: Long) {
                             cursor = cursor,
                             onScrub = { cursor = it },
                         )
-                        Text(tr("Przesuń palcem po wykresie – punkt pokaże się na mapie."), color = Palette.TextFaint, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+                        Text(tr(R.string.przesun_palcem_po_wykresie_punkt_pokaze), color = Palette.TextFaint, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
                     }
                 }
 
                 // Fragmenty.
                 Spacer(Modifier.height(20.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 4.dp)) {
-                    Text(tr("Fragmenty"), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    Text(tr("dotknij, aby edytować"), color = Palette.TextFaint, fontSize = 12.sp)
+                    Text(tr(R.string.fragmenty), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Text(tr(R.string.dotknij_aby_edytowac), color = Palette.TextFaint, fontSize = 12.sp)
                 }
                 Spacer(Modifier.height(8.dp))
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Palette.PanelHigh)) {
@@ -218,7 +220,7 @@ fun TrackDetailScreen(vm: AppViewModel, trackId: Long) {
                 // Znaczniki.
                 if (d.waypoints.isNotEmpty()) {
                     Spacer(Modifier.height(20.dp))
-                    Text(tr("Znaczniki"), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
+                    Text(tr(R.string.znaczniki), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
                     Spacer(Modifier.height(8.dp))
                     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Palette.PanelHigh)) {
                         d.waypoints.forEach { w ->
@@ -249,9 +251,9 @@ fun TrackDetailScreen(vm: AppViewModel, trackId: Long) {
                 NotesField(t.notes) { vm.setNotes(t.id, it) }
 
                 Spacer(Modifier.height(18.dp))
-                PillButton(tr("Usuń trasę"), Modifier.fillMaxWidth(), danger = true, icon = Icons.Rounded.Delete) { deleting = true }
+                PillButton(tr(R.string.usun_trase), Modifier.fillMaxWidth(), danger = true, icon = Icons.Rounded.Delete) { deleting = true }
                 Text(
-                    tr("Punkty: {0} · ID {1}", s.points, t.uuid.take(8)),
+                    tr(R.string.punkty_x_id_x, s.points, t.uuid.take(8)),
                     color = Palette.TextFaint,
                     fontSize = 11.sp,
                     modifier = Modifier.padding(vertical = 14.dp, horizontal = 4.dp),
@@ -261,33 +263,33 @@ fun TrackDetailScreen(vm: AppViewModel, trackId: Long) {
         }
 
         if (renaming) {
-            TextDialog(tr("Nazwa trasy"), t.name, onDismiss = { renaming = false }) {
+            TextDialog(tr(R.string.nazwa_trasy), t.name, onDismiss = { renaming = false }) {
                 vm.rename(t.id, it)
                 renaming = false
             }
         }
         if (deleting) {
             DarkDialog(
-                tr("Usunąć trasę?"),
+                tr(R.string.usunac_trase),
                 onDismiss = { deleting = false },
                 icon = Icons.Rounded.Delete,
                 buttons = {
-                    PillButton(tr("Anuluj"), primary = false) { deleting = false }
-                    PillButton(tr("Usuń"), danger = true) {
+                    PillButton(tr(R.string.anuluj), primary = false) { deleting = false }
+                    PillButton(tr(R.string.usun), danger = true) {
                         deleting = false
                         vm.delete(listOf(t.id))
                         vm.openTrack = null
                     }
                 },
             ) {
-                Text(tr("„{0}” zniknie z bazy razem z punktami i znacznikami.", t.name), color = Palette.TextDim, fontSize = 14.sp, lineHeight = 20.sp)
+                Text(tr(R.string.x_zniknie_z_bazy_razem_z, t.name), color = Palette.TextDim, fontSize = 14.sp, lineHeight = 20.sp)
             }
         }
         if (exporting) {
             ExportSheet(vm, listOf(t.id), t.segments.size, t.segments.map { it.mode }.distinct().size, onDismiss = { exporting = false })
         }
         segmentExport?.let { seg ->
-            ExportSheet(vm, listOf(t.id), 1, 1, segmentIds = setOf(seg.id), title = tr("Eksport fragmentu: {0}", seg.mode.label), onDismiss = { segmentExport = null })
+            ExportSheet(vm, listOf(t.id), 1, 1, segmentIds = setOf(seg.id), title = tr(R.string.eksport_fragmentu_x, seg.mode.label), onDismiss = { segmentExport = null })
         }
         segmentSheet?.let { seg ->
             SegmentSheet(
@@ -333,7 +335,7 @@ private fun SegmentRow(seg: Segment, i: Int, count: Int, units: Units, onClick: 
         Column(Modifier.weight(1f)) {
             Text(if (count > 1) "${i + 1}. ${seg.mode.label}" else seg.mode.label, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text(
-                Units.time(seg.startTime) + "–" + Units.time(seg.endTime) + " · " + Units.duration(seg.stats.duration, seconds = false) + " · " + tr("śr. {0}", units.fmtSpeed(seg.stats.avgMovingSpeed)),
+                Units.time(seg.startTime) + "–" + Units.time(seg.endTime) + " · " + Units.duration(seg.stats.duration, seconds = false) + " · " + tr(R.string.sr_x, units.fmtSpeed(seg.stats.avgMovingSpeed)),
                 color = Palette.TextDim,
                 fontSize = 12.sp,
                 maxLines = 1,
@@ -368,7 +370,7 @@ private fun SegmentSheet(
         contentColor = Color.White,
     ) {
         Column(Modifier.padding(horizontal = 18.dp).padding(bottom = 28.dp).verticalScroll(rememberScrollState())) {
-            Text(tr("Fragment {0} z {1}", seg.index + 1, count), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(tr(R.string.fragment_x_z_x, seg.index + 1, count), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Text(
                 units.fmtDist(seg.stats.distance) + " · " + Units.time(seg.startTime) + "–" + Units.time(seg.endTime),
                 color = Palette.TextDim,
@@ -376,7 +378,7 @@ private fun SegmentSheet(
             )
             Spacer(Modifier.height(16.dp))
             if (!splitting) {
-                Text(tr("Środek transportu"), color = Palette.TextDim, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(tr(R.string.srodek_transportu), color = Palette.TextDim, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
                 ModeGrid(seg.mode) { m ->
                     vm.setSegmentMode(seg.id, m)
@@ -384,16 +386,16 @@ private fun SegmentSheet(
                 }
                 Spacer(Modifier.height(18.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PillButton(tr("Podziel"), Modifier.weight(1f), primary = false, icon = Icons.Rounded.ContentCut, enabled = points.size > 3) { splitting = true }
-                    PillButton(tr("Połącz z następnym"), Modifier.weight(1f), primary = false, icon = Icons.AutoMirrored.Rounded.CallMerge, enabled = !isLast) {
+                    PillButton(tr(R.string.podziel), Modifier.weight(1f), primary = false, icon = Icons.Rounded.ContentCut, enabled = points.size > 3) { splitting = true }
+                    PillButton(tr(R.string.polacz_z_nastepnym), Modifier.weight(1f), primary = false, icon = Icons.AutoMirrored.Rounded.CallMerge, enabled = !isLast) {
                         vm.mergeWithNext(seg.id)
                         onDismiss()
                     }
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PillButton(tr("Eksportuj fragment"), Modifier.weight(1f), primary = false, icon = Icons.Rounded.FileDownload, onClick = onExport)
-                    PillButton(tr("Usuń"), Modifier.weight(1f), danger = true, icon = Icons.Rounded.Delete, enabled = count > 1) {
+                    PillButton(tr(R.string.eksportuj_fragment), Modifier.weight(1f), primary = false, icon = Icons.Rounded.FileDownload, onClick = onExport)
+                    PillButton(tr(R.string.usun), Modifier.weight(1f), danger = true, icon = Icons.Rounded.Delete, enabled = count > 1) {
                         vm.deleteSegment(seg.id)
                         onDismiss()
                     }
@@ -402,23 +404,23 @@ private fun SegmentSheet(
                 val idx = ((points.size - 1) * splitFrac).roundToInt().coerceIn(1, points.size - 2)
                 val at = points[idx]
                 LaunchedEffect(idx) { onPreview(at.second) }
-                Text(tr("Podział o {0}", Units.timeSec(at.first)), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text(tr("Przesuń suwak – miejsce podziału widać na mapie."), color = Palette.TextDim, fontSize = 12.sp)
+                Text(tr(R.string.podzial_o_x, Units.timeSec(at.first)), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(tr(R.string.przesun_suwak_miejsce_podzialu_widac_na), color = Palette.TextDim, fontSize = 12.sp)
                 Slider(
                     splitFrac,
                     { splitFrac = it },
                     colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = seg.mode.tint, inactiveTrackColor = splitMode.tint),
                 )
-                Text(tr("Druga część to:"), color = Palette.TextDim, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(tr(R.string.druga_czesc_to), color = Palette.TextDim, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
                 ModeGrid(splitMode) { splitMode = it }
                 Spacer(Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PillButton(tr("Anuluj"), Modifier.weight(1f), primary = false) {
+                    PillButton(tr(R.string.anuluj), Modifier.weight(1f), primary = false) {
                         splitting = false
                         onPreview(null)
                     }
-                    PillButton(tr("Podziel tutaj"), Modifier.weight(1f), icon = Icons.Rounded.ContentCut) {
+                    PillButton(tr(R.string.podziel_tutaj), Modifier.weight(1f), icon = Icons.Rounded.ContentCut) {
                         vm.splitSegment(seg.id, at.first, splitMode)
                         onDismiss()
                     }
@@ -434,13 +436,13 @@ private fun NotesField(initial: String, onSave: (String) -> Unit) {
     OutlinedTextField(
         value = text,
         onValueChange = { text = it },
-        label = { Text(tr("Notatki")) },
+        label = { Text(tr(R.string.notatki)) },
         modifier = Modifier.fillMaxWidth(),
         minLines = 2,
         shape = RoundedCornerShape(18.dp),
         colors = fieldColors(),
         trailingIcon = if (text != initial) {
-            { Text(tr("Zapisz"), color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 12.dp).press { onSave(text) }) }
+            { Text(tr(R.string.zapisz), color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 12.dp).press { onSave(text) }) }
         } else {
             null
         },
@@ -465,8 +467,8 @@ fun TextDialog(title: String, initial: String, onDismiss: () -> Unit, onSave: (S
         title,
         onDismiss = onDismiss,
         buttons = {
-            PillButton(tr("Anuluj"), primary = false, onClick = onDismiss)
-            PillButton(tr("Zapisz")) { onSave(text) }
+            PillButton(tr(R.string.anuluj), primary = false, onClick = onDismiss)
+            PillButton(tr(R.string.zapisz)) { onSave(text) }
         },
     ) {
         OutlinedTextField(text, { text = it }, singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = fieldColors())
@@ -478,23 +480,64 @@ private fun WaypointDialog(w: Waypoint, onDismiss: () -> Unit, onDelete: () -> U
     var name by remember { mutableStateOf(w.name) }
     var note by remember { mutableStateOf(w.note) }
     DarkDialog(
-        tr("Znacznik"),
+        tr(R.string.znacznik),
         onDismiss = onDismiss,
         icon = Icons.Rounded.Place,
         buttons = {
-            PillButton(tr("Usuń"), danger = true, onClick = onDelete)
+            PillButton(tr(R.string.usun), danger = true, onClick = onDelete)
             Spacer(Modifier.weight(1f))
-            PillButton(tr("Zapisz")) { onSave(name, note) }
+            PillButton(tr(R.string.zapisz)) { onSave(name, note) }
         },
     ) {
-        OutlinedTextField(name, { name = it }, label = { Text(tr("Nazwa")) }, singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = fieldColors())
+        OutlinedTextField(name, { name = it }, label = { Text(tr(R.string.nazwa)) }, singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = fieldColors())
         Spacer(Modifier.height(10.dp))
-        OutlinedTextField(note, { note = it }, label = { Text(tr("Opis")) }, modifier = Modifier.fillMaxWidth(), minLines = 2, shape = RoundedCornerShape(16.dp), colors = fieldColors())
+        OutlinedTextField(note, { note = it }, label = { Text(tr(R.string.opis)) }, modifier = Modifier.fillMaxWidth(), minLines = 2, shape = RoundedCornerShape(16.dp), colors = fieldColors())
         Text(
             "%.6f, %.6f".format(java.util.Locale.US, w.lat, w.lon),
             color = Palette.TextFaint,
             fontSize = 12.sp,
             modifier = Modifier.padding(top = 10.dp),
         )
+    }
+}
+
+/** „Jedź tą trasą” i pobranie mapy okolicy trasy do pracy bez internetu. */
+@Composable
+private fun TrackTools(vm: AppViewModel, d: AppViewModel.TrackDetail, styleUrl: String) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val guide by com.blacksingularities.gpxreg.record.RouteGuide.state.collectAsState()
+    val offline by com.blacksingularities.gpxreg.ui.map.OfflineMaps.state.collectAsState()
+    val following = guide?.trackId == d.track.id
+    Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        com.blacksingularities.gpxreg.ui.theme.PillButton(
+            if (following) tr(R.string.guide_stop) else tr(R.string.guide_follow),
+            primary = !following,
+            modifier = Modifier.weight(1f),
+        ) {
+            if (following) vm.stopFollowing() else vm.followRoute(d.track.id)
+        }
+        com.blacksingularities.gpxreg.ui.theme.PillButton(
+            tr(R.string.offline_download),
+            primary = false,
+            modifier = Modifier.weight(1f),
+            enabled = offline !is com.blacksingularities.gpxreg.ui.map.OfflineState.Downloading,
+        ) {
+            com.blacksingularities.gpxreg.ui.map.OfflineMaps.download(context, d.track.name, styleUrl, d.points.map { LatLon(it.lat, it.lon) })
+        }
+    }
+    when (val o = offline) {
+        is com.blacksingularities.gpxreg.ui.map.OfflineState.Downloading -> Text(
+            tr(R.string.offline_progress, (o.progress * 100).roundToInt(), android.text.format.Formatter.formatShortFileSize(context, o.bytes)),
+            color = Palette.TextDim, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp, start = 6.dp),
+        )
+        is com.blacksingularities.gpxreg.ui.map.OfflineState.Done -> Text(
+            tr(R.string.offline_done, android.text.format.Formatter.formatShortFileSize(context, o.bytes)),
+            color = Palette.TextDim, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp, start = 6.dp),
+        )
+        is com.blacksingularities.gpxreg.ui.map.OfflineState.Failed -> Text(
+            tr(R.string.offline_failed),
+            color = Palette.Warn, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp, start = 6.dp),
+        )
+        else -> Unit
     }
 }

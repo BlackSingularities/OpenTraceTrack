@@ -1,5 +1,6 @@
 package com.blacksingularities.gpxreg.ui
 
+import com.blacksingularities.gpxreg.R
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,8 +69,18 @@ import com.blacksingularities.gpxreg.data.MapStyle
 import com.blacksingularities.gpxreg.data.ModeDetection
 import com.blacksingularities.gpxreg.data.UnitSystem
 import com.blacksingularities.gpxreg.data.Units
-import com.blacksingularities.gpxreg.i18n.AppLanguage
+import com.blacksingularities.gpxreg.i18n.I18n
 import com.blacksingularities.gpxreg.i18n.tr
+import com.blacksingularities.gpxreg.i18n.trp
+import com.blacksingularities.gpxreg.ui.map.OfflineMaps
+import com.blacksingularities.gpxreg.ui.map.OfflineState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.CloudSync
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.School
 import com.blacksingularities.gpxreg.io.DataPort
 import com.blacksingularities.gpxreg.record.SensorHub
 import com.blacksingularities.gpxreg.update.UpdateState
@@ -94,6 +105,12 @@ fun SettingsScreen(vm: AppViewModel) {
     val units = remember(s.units) { Units(s.units) }
     var choice by remember { mutableStateOf<Choice<*>?>(null) }
     var showModes by remember { mutableStateOf(false) }
+    var battery by remember { mutableStateOf(false) }
+    var crashLog by remember { mutableStateOf(false) }
+    var deleteOffline by remember { mutableStateOf(false) }
+    val offlineAreas by OfflineMaps.areas.collectAsStateWithLifecycle()
+    val offline by OfflineMaps.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { OfflineMaps.refresh(context) }
     BackHandler { vm.settingsOpen = false }
 
     fun <T> pick(title: String, options: List<Pair<T, String>>, selected: T, onPick: (T) -> Unit) {
@@ -103,58 +120,54 @@ fun SettingsScreen(vm: AppViewModel) {
     Box(Modifier.fillMaxSize().background(Palette.Ink).windowInsetsPadding(WindowInsets.safeDrawing)) {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                RoundIcon(Icons.AutoMirrored.Rounded.ArrowBack, tr("Wstecz"), size = 40.dp) { vm.settingsOpen = false }
-                Text(tr("Ustawienia"), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(start = 14.dp))
+                RoundIcon(Icons.AutoMirrored.Rounded.ArrowBack, tr(R.string.wstecz), size = 40.dp) { vm.settingsOpen = false }
+                Text(tr(R.string.ustawienia), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(start = 14.dp))
             }
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) {
                 UpdateBanner(vm, Modifier.padding(top = 6.dp))
 
-                SectionTitle(tr("Ogólne"))
+                SectionTitle(tr(R.string.ogolne))
                 Group {
                     SettingRow(
-                        tr("Język"),
+                        tr(R.string.jezyk),
                         icon = Icons.Rounded.Language,
-                        value = when (s.language) {
-                            AppLanguage.SYSTEM -> tr("Systemowy")
-                            AppLanguage.PL -> "Polski"
-                            AppLanguage.EN -> "English"
-                        },
+                        value = if (s.language.isBlank()) tr(R.string.systemowy) else I18n.displayName(s.language),
                     ) {
-                        pick(tr("Język"), listOf(AppLanguage.SYSTEM to tr("Systemowy"), AppLanguage.PL to "Polski", AppLanguage.EN to "English"), s.language) { v ->
+                        pick(tr(R.string.jezyk), listOf("" to tr(R.string.systemowy)) + I18n.available.map { it to I18n.displayName(it) }, s.language) { v ->
                             vm.updateSettings { it.copy(language = v) }
                         }
                     }
                     SettingRow(
-                        tr("Jednostki"),
+                        tr(R.string.jednostki),
                         icon = Icons.Rounded.Straighten,
                         value = "${units.speedUnit} · ${units.altUnit}",
                     ) {
                         pick(
-                            tr("Jednostki"),
+                            tr(R.string.jednostki),
                             listOf(
-                                UnitSystem.METRIC to tr("Metryczne (km/h, m)"),
-                                UnitSystem.IMPERIAL to tr("Imperialne (mph, ft)"),
-                                UnitSystem.NAUTICAL to tr("Lotnicze / morskie (kn, ft, NM)"),
+                                UnitSystem.METRIC to tr(R.string.metryczne_km_h_m),
+                                UnitSystem.IMPERIAL to tr(R.string.imperialne_mph_ft),
+                                UnitSystem.NAUTICAL to tr(R.string.lotnicze_morskie_kn_ft_nm),
                             ),
                             s.units,
                         ) { v -> vm.updateSettings { it.copy(units = v) } }
                     }
-                    ToggleRow(tr("Wibracje"), icon = Icons.Rounded.Vibration, checked = s.haptics) { v -> vm.updateSettings { it.copy(haptics = v) } }
+                    ToggleRow(tr(R.string.wibracje), icon = Icons.Rounded.Vibration, checked = s.haptics) { v -> vm.updateSettings { it.copy(haptics = v) } }
                 }
 
                 SectionTitle("HUD")
                 Group {
                     SettingRow(
-                        tr("Styl"),
-                        tr("Taśmy i ślad albo duże cyfry"),
+                        tr(R.string.styl),
+                        tr(R.string.tasmy_i_slad_albo_duze_cyfry),
                         Icons.Rounded.Speed,
-                        value = if (s.hudStyle == HudStyle.AVIATION) tr("Lotniczy") else tr("Prosty"),
+                        value = if (s.hudStyle == HudStyle.AVIATION) tr(R.string.lotniczy) else tr(R.string.prosty),
                     ) {
-                        pick(tr("Styl HUD"), listOf(HudStyle.AVIATION to tr("Lotniczy"), HudStyle.SIMPLE to tr("Prosty")), s.hudStyle) { v ->
+                        pick(tr(R.string.styl_hud), listOf(HudStyle.AVIATION to tr(R.string.lotniczy), HudStyle.SIMPLE to tr(R.string.prosty)), s.hudStyle) { v ->
                             vm.updateSettings { it.copy(hudStyle = v) }
                         }
                     }
-                    SettingRow(tr("Kolor symboli"), icon = Icons.Rounded.Palette, trailing = {
+                    SettingRow(tr(R.string.kolor_symboli), icon = Icons.Rounded.Palette, trailing = {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             HudColor.entries.forEach { c ->
                                 Box(
@@ -164,138 +177,173 @@ fun SettingsScreen(vm: AppViewModel) {
                                         .background(Color(c.argb))
                                         .border(3.dp, if (s.hudColor == c) Color.White else Color.Transparent, CircleShape)
                                         .border(5.dp, if (s.hudColor == c) Palette.PanelHigh else Color.Transparent, CircleShape)
-                                        .press(label = c.name) { vm.updateSettings { it.copy(hudColor = c) } },
+                                        .press(label = hudColorName(c)) { vm.updateSettings { it.copy(hudColor = c) } },
                                 )
                             }
                         }
                     })
-                    ToggleRow(tr("Poświata"), tr("Blask jak na prawdziwym HUD"), Icons.Rounded.LightMode, s.hudGlow) { v -> vm.updateSettings { it.copy(hudGlow = v) } }
+                    ToggleRow(tr(R.string.poswiata), tr(R.string.blask_jak_na_prawdziwym_hud), Icons.Rounded.LightMode, s.hudGlow) { v -> vm.updateSettings { it.copy(hudGlow = v) } }
                     ToggleRow(
-                        tr("Ślad ruchu"),
-                        tr("Droga i wektor 30 s, kierunek w górę"),
+                        tr(R.string.slad_ruchu),
+                        tr(R.string.droga_i_wektor_30_s_kierunek),
                         Icons.Rounded.Timeline,
                         s.hudHorizon,
                     ) { v -> vm.updateSettings { it.copy(hudHorizon = v) } }
-                    ToggleRow(tr("Ekran zawsze włączony"), tr("Na ekranie nagrywania"), Icons.Rounded.Visibility, s.keepScreenOn) { v -> vm.updateSettings { it.copy(keepScreenOn = v) } }
+                    ToggleRow(tr(R.string.ekran_zawsze_wlaczony), tr(R.string.na_ekranie_nagrywania), Icons.Rounded.Visibility, s.keepScreenOn) { v -> vm.updateSettings { it.copy(keepScreenOn = v) } }
                 }
 
-                SectionTitle(tr("Nagrywanie"))
+                SectionTitle(tr(R.string.nagrywanie))
                 Group {
-                    SettingRow(tr("Domyślny środek transportu"), icon = s.defaultMode.icon, value = s.defaultMode.label) { showModes = true }
+                    SettingRow(tr(R.string.domyslny_srodek_transportu), icon = s.defaultMode.icon, value = s.defaultMode.label) { showModes = true }
                     SettingRow(
-                        tr("Wykrywanie przesiadek"),
+                        tr(R.string.wykrywanie_przesiadek),
                         when (s.modeDetection) {
-                            ModeDetection.OFF -> tr("Tylko ręcznie")
-                            ModeDetection.SUGGEST -> tr("Podpowiada, decydujesz Ty")
-                            ModeDetection.AUTO -> tr("Dzieli trasę sam")
+                            ModeDetection.OFF -> tr(R.string.tylko_recznie)
+                            ModeDetection.SUGGEST -> tr(R.string.podpowiada_decydujesz_ty)
+                            ModeDetection.AUTO -> tr(R.string.dzieli_trase_sam)
                         },
                         Icons.Rounded.Compress,
                         value = when (s.modeDetection) {
-                            ModeDetection.OFF -> tr("Wyłączone")
-                            ModeDetection.SUGGEST -> tr("Podpowiedzi")
-                            ModeDetection.AUTO -> tr("Automatycznie")
+                            ModeDetection.OFF -> tr(R.string.wylaczone)
+                            ModeDetection.SUGGEST -> tr(R.string.podpowiedzi)
+                            ModeDetection.AUTO -> tr(R.string.automatycznie)
                         },
                     ) {
                         pick(
-                            tr("Wykrywanie przesiadek"),
-                            listOf(ModeDetection.OFF to tr("Wyłączone"), ModeDetection.SUGGEST to tr("Podpowiedzi"), ModeDetection.AUTO to tr("Automatycznie")),
+                            tr(R.string.wykrywanie_przesiadek),
+                            listOf(ModeDetection.OFF to tr(R.string.wylaczone), ModeDetection.SUGGEST to tr(R.string.podpowiedzi), ModeDetection.AUTO to tr(R.string.automatycznie)),
                             s.modeDetection,
                         ) { v -> vm.updateSettings { it.copy(modeDetection = v) } }
                     }
-                    SettingRow(tr("Odstęp punktów"), tr("Krótszy – dokładniejsza trasa, większy plik"), Icons.Rounded.Timer, value = tr("{0} s", s.interval)) {
-                        pick(tr("Odstęp punktów"), listOf(1, 2, 3, 5, 10).map { it to tr("co {0} s", it) }, s.interval) { v -> vm.updateSettings { it.copy(interval = v) } }
+                    SettingRow(tr(R.string.odstep_punktow), tr(R.string.krotszy_dokladniejsza_trasa_wiekszy_plik), Icons.Rounded.Timer, value = tr(R.string.x_s, s.interval)) {
+                        pick(tr(R.string.odstep_punktow), listOf(1, 2, 3, 5, 10).map { it to tr(R.string.co_x_s, it) }, s.interval) { v -> vm.updateSettings { it.copy(interval = v) } }
                     }
-                    SettingRow(tr("Filtr dokładności"), tr("Pozycje mniej dokładne są pomijane"), Icons.Rounded.GpsFixed, value = "±${s.maxAccuracy} m") {
-                        pick(tr("Filtr dokładności"), listOf(10, 20, 35, 50, 100).map { it to "±$it m" }, s.maxAccuracy) { v -> vm.updateSettings { it.copy(maxAccuracy = v) } }
+                    SettingRow(tr(R.string.filtr_dokladnosci), tr(R.string.pozycje_mniej_dokladne_sa_pomijane), Icons.Rounded.GpsFixed, value = "±${s.maxAccuracy} m") {
+                        pick(tr(R.string.filtr_dokladnosci), listOf(10, 20, 35, 50, 100).map { it to "±$it m" }, s.maxAccuracy) { v -> vm.updateSettings { it.copy(maxAccuracy = v) } }
                     }
-                    ToggleRow(tr("Automatyczna pauza"), tr("Postój nie zawyża czasu i nie dodaje szumu do trasy"), Icons.Rounded.PauseCircle, s.autoPause) { v ->
+                    ToggleRow(tr(R.string.automatyczna_pauza), tr(R.string.postoj_nie_zawyza_czasu_i_nie), Icons.Rounded.PauseCircle, s.autoPause) { v ->
                         vm.updateSettings { it.copy(autoPause = v) }
                     }
                     if (s.autoPause) {
-                        SettingRow(tr("Pauza po postoju"), value = tr("{0} s", s.autoPauseDelay)) {
-                            pick(tr("Pauza po postoju"), listOf(10, 20, 30, 60, 120).map { it to tr("{0} s", it) }, s.autoPauseDelay) { v -> vm.updateSettings { it.copy(autoPauseDelay = v) } }
+                        SettingRow(tr(R.string.pauza_po_postoju), value = tr(R.string.x_s, s.autoPauseDelay)) {
+                            pick(tr(R.string.pauza_po_postoju), listOf(10, 20, 30, 60, 120).map { it to tr(R.string.x_s, it) }, s.autoPauseDelay) { v -> vm.updateSettings { it.copy(autoPauseDelay = v) } }
                         }
                     }
                     SettingRow(
-                        tr("Ostrzeżenie o prędkości"),
-                        tr("Wibracja i czerwony pasek w HUD po przekroczeniu"),
+                        tr(R.string.ostrzezenie_o_predkosci),
+                        tr(R.string.wibracja_i_czerwony_pasek_w_hud),
                         Icons.Rounded.Speed,
-                        value = if (s.speedAlert <= 0) tr("Wyłączone") else units.fmtSpeed(s.speedAlert, 0),
+                        value = if (s.speedAlert <= 0) tr(R.string.wylaczone) else units.fmtSpeed(s.speedAlert, 0),
                     ) {
                         val opts = listOf(0, 30, 50, 70, 90, 100, 120, 140).map { v ->
                             val ms = if (v == 0) 0.0 else units.speedToMs(v.toDouble())
-                            ms to if (v == 0) tr("Wyłączone") else "$v ${units.speedUnit}"
+                            ms to if (v == 0) tr(R.string.wylaczone) else "$v ${units.speedUnit}"
                         }
                         val current = opts.minByOrNull { kotlin.math.abs(it.first - s.speedAlert) }?.first ?: 0.0
-                        pick(tr("Ostrzeżenie o prędkości"), opts, current) { v -> vm.updateSettings { it.copy(speedAlert = v) } }
+                        pick(tr(R.string.ostrzezenie_o_predkosci), opts, current) { v -> vm.updateSettings { it.copy(speedAlert = v) } }
                     }
                     ToggleRow(
-                        tr("Barometr"),
-                        if (SensorHub.hasBarometer(context)) tr("Dokładniejsza prędkość pionowa i ciśnienie w punktach") else tr("Ten telefon nie ma barometru"),
+                        tr(R.string.barometr),
+                        if (SensorHub.hasBarometer(context)) tr(R.string.dokladniejsza_predkosc_pionowa_i_cisnienie_w) else tr(R.string.ten_telefon_nie_ma_barometru),
                         Icons.Rounded.Compress,
                         s.useBarometer && SensorHub.hasBarometer(context),
                         enabled = SensorHub.hasBarometer(context),
                     ) { v -> vm.updateSettings { it.copy(useBarometer = v) } }
                     SettingRow(
-                        tr("Praca w tle"),
-                        tr("Wyłącz optymalizację baterii dla OpenTraceTrack, jeśli długie nagrania się przerywają"),
+                        tr(R.string.praca_w_tle),
+                        if (platform.isIgnoringBattery()) tr(R.string.battery_ok) else tr(R.string.wylacz_optymalizacje_baterii_dla_opentracetr),
                         Icons.Rounded.BatterySaver,
-                    ) { platform.openBatterySettings() }
+                    ) { battery = true }
                 }
 
-                SectionTitle(tr("Mapa"))
+                SectionTitle(tr(R.string.mapa))
                 Group {
                     SettingRow(
-                        tr("Styl mapy"),
+                        tr(R.string.styl_mapy),
                         icon = Icons.Rounded.Layers,
                         value = when (s.mapStyle) {
-                            MapStyle.DARK -> tr("Ciemna")
-                            MapStyle.LIGHT -> tr("Jasna")
-                            MapStyle.STREETS -> tr("Ulice (kolorowa)")
+                            MapStyle.DARK -> tr(R.string.ciemna)
+                            MapStyle.LIGHT -> tr(R.string.jasna)
+                            MapStyle.STREETS -> tr(R.string.ulice_kolorowa)
                         },
                     ) {
-                        pick(tr("Styl mapy"), listOf(MapStyle.DARK to tr("Ciemna"), MapStyle.LIGHT to tr("Jasna"), MapStyle.STREETS to tr("Ulice (kolorowa)")), s.mapStyle) { v ->
+                        pick(tr(R.string.styl_mapy), listOf(MapStyle.DARK to tr(R.string.ciemna), MapStyle.LIGHT to tr(R.string.jasna), MapStyle.STREETS to tr(R.string.ulice_kolorowa)), s.mapStyle) { v ->
                             vm.updateSettings { it.copy(mapStyle = v) }
                         }
                     }
+                    SettingRow(
+                        tr(R.string.offline_title),
+                        when (val o = offline) {
+                            is OfflineState.Downloading -> tr(R.string.offline_progress, (o.progress * 100).roundToInt(), android.text.format.Formatter.formatShortFileSize(context, o.bytes))
+                            else -> if (offlineAreas.isEmpty()) tr(R.string.offline_hint) else trp(R.plurals.offline_areas, offlineAreas.size)
+                        },
+                        Icons.Rounded.CloudDownload,
+                        value = if (offlineAreas.isNotEmpty()) tr(R.string.crash_delete) else null,
+                    ) { if (offlineAreas.isNotEmpty()) deleteOffline = true }
                 }
 
-                SectionTitle(tr("Dane"))
+                SectionTitle(tr(R.string.dane))
                 Group {
-                    SettingRow(tr("Importuj pliki GPX"), tr("Z dowolnej aplikacji – typ aktywności zostanie rozpoznany"), Icons.Rounded.FileUpload) { platform.pickGpx() }
-                    SettingRow(tr("Zapisz kopię bazy"), tr("Jeden plik SQLite ze wszystkimi trasami – otworzysz go też w DB Browser"), Icons.Rounded.Backup) {
+                    SettingRow(tr(R.string.importuj_pliki_gpx), tr(R.string.z_dowolnej_aplikacji_typ_aktywnosci_zostanie), Icons.Rounded.FileUpload) { platform.pickGpx() }
+                    SettingRow(
+                        tr(R.string.autobackup_title),
+                        if (s.autoBackupUri.isBlank()) tr(R.string.autobackup_hint) else tr(R.string.autobackup_folder, vm.port.folderName(android.net.Uri.parse(s.autoBackupUri))),
+                        Icons.Rounded.CloudSync,
+                        value = if (s.autoBackupUri.isBlank()) tr(R.string.wylaczone) else null,
+                    ) { platform.openFolder { vm.setAutoBackupFolder(it) } }
+                    if (s.autoBackupUri.isNotBlank()) {
+                        val freq = listOf(0 to tr(R.string.autobackup_each), 1 to tr(R.string.autobackup_daily), 7 to tr(R.string.autobackup_weekly))
+                        SettingRow(tr(R.string.autobackup_when), icon = Icons.Rounded.Timer, value = freq.firstOrNull { it.first == s.autoBackupDays }?.second) {
+                            pick(tr(R.string.autobackup_when), freq, s.autoBackupDays) { v -> vm.updateSettings { it.copy(autoBackupDays = v) } }
+                        }
+                        SettingRow(
+                            tr(R.string.autobackup_now),
+                            if (s.lastAutoBackup > 0) tr(R.string.autobackup_last, Units.dateTime(s.lastAutoBackup)) else tr(R.string.autobackup_never),
+                            Icons.Rounded.Backup,
+                        ) { vm.backupNow() }
+                        SettingRow(tr(R.string.autobackup_off), icon = Icons.Rounded.CloudOff) { vm.disableAutoBackup() }
+                    }
+                    SettingRow(tr(R.string.zapisz_kopie_bazy), tr(R.string.jeden_plik_sqlite_ze_wszystkimi_trasami), Icons.Rounded.Backup) {
                         platform.createDocument(DataPort.backupName(), "application/vnd.sqlite3") { vm.exportBackup(it) }
                     }
-                    SettingRow(tr("Wczytaj kopię bazy"), tr("Scala trasy z kopią – istniejące nie zostaną zdublowane"), Icons.Rounded.Restore) { platform.pickBackup() }
+                    SettingRow(tr(R.string.wczytaj_kopie_bazy), tr(R.string.scala_trasy_z_kopia_istniejace_nie), Icons.Rounded.Restore) { platform.pickBackup() }
                 }
 
-                SectionTitle(tr("Aplikacja"))
+                SectionTitle(tr(R.string.aplikacja))
                 Group {
                     val u = vm.update
                     SettingRow(
-                        tr("Aktualizacje"),
+                        tr(R.string.aktualizacje),
                         when (u) {
-                            UpdateState.Checking -> tr("Sprawdzanie…")
-                            UpdateState.UpToDate -> tr("Masz najnowszą wersję")
-                            is UpdateState.Available -> tr("Dostępna wersja {0}", u.info.version)
-                            is UpdateState.Downloading -> tr("Pobieranie {0}%", (u.progress * 100).roundToInt())
-                            is UpdateState.Ready -> tr("Gotowa do instalacji")
-                            is UpdateState.Installing -> tr("Instalowanie…")
+                            UpdateState.Checking -> tr(R.string.sprawdzanie)
+                            UpdateState.UpToDate -> tr(R.string.masz_najnowsza_wersje)
+                            is UpdateState.Available -> tr(R.string.dostepna_wersja_x, u.info.version)
+                            is UpdateState.Downloading -> tr(R.string.pobieranie_x, (u.progress * 100).roundToInt())
+                            is UpdateState.Ready -> tr(R.string.gotowa_do_instalacji)
+                            is UpdateState.Installing -> tr(R.string.instalowanie)
                             is UpdateState.Failed -> u.message
-                            UpdateState.Idle -> tr("Wersja {0}", BuildConfig.VERSION_NAME)
+                            UpdateState.Idle -> tr(R.string.wersja_x, BuildConfig.VERSION_NAME)
                         },
                         Icons.Rounded.SystemUpdate,
                     ) {
                         if (u is UpdateState.Idle || u is UpdateState.UpToDate || u is UpdateState.Failed && u.info == null) vm.checkUpdate()
                         vm.updateSheet = true
                     }
-                    ToggleRow(tr("Sprawdzaj automatycznie"), tr("Przy uruchomieniu, najwyżej co 6 godzin"), checked = s.autoUpdate) { v -> vm.updateSettings { it.copy(autoUpdate = v) } }
-                    SettingRow(tr("Pomysł i wykonanie"), "Adam Rędzikowski · redzikowski.com", Icons.Rounded.Person) { platform.openUrl("https://redzikowski.com") }
-                    SettingRow(tr("Kontakt"), "kontakt@redzikowski.com", Icons.Rounded.Email) { platform.openUrl("mailto:kontakt@redzikowski.com") }
-                    SettingRow(tr("Postaw kawę"), tr("Wesprzyj rozwój na buycoffee.to"), Icons.Rounded.LocalCafe) { platform.openUrl("https://buycoffee.to/adamredzikowski") }
+                    ToggleRow(tr(R.string.sprawdzaj_automatycznie), tr(R.string.przy_uruchomieniu_najwyzej_co_6_godzin), checked = s.autoUpdate) { v -> vm.updateSettings { it.copy(autoUpdate = v) } }
+                    SettingRow(tr(R.string.about_title), tr(R.string.about_subtitle), Icons.Rounded.Info) { vm.aboutOpen = true }
+                    if (vm.crashLogAvailable) {
+                        SettingRow(tr(R.string.crash_title), tr(R.string.crash_subtitle), Icons.Rounded.BugReport) { crashLog = true }
+                    }
+                    SettingRow(tr(R.string.onb_again), icon = Icons.Rounded.School) {
+                        vm.settingsOpen = false
+                        vm.updateSettings { it.copy(onboarded = false) }
+                    }
+                    SettingRow(tr(R.string.pomysl_i_wykonanie), "Adam Rędzikowski · redzikowski.com", Icons.Rounded.Person) { platform.openUrl("https://redzikowski.com") }
+                    SettingRow(tr(R.string.kontakt), "kontakt@redzikowski.com", Icons.Rounded.Email) { platform.openUrl("mailto:kontakt@redzikowski.com") }
+                    SettingRow(tr(R.string.postaw_kawe), tr(R.string.wesprzyj_rozwoj_na_buycoffee_to), Icons.Rounded.LocalCafe) { platform.openUrl("https://buycoffee.to/adamredzikowski") }
                 }
                 Text(
-                    tr("OpenTraceTrack {0} · licencja MIT · mapy © OpenStreetMap, CARTO, OpenFreeMap", BuildConfig.VERSION_NAME),
+                    tr(R.string.opentracetrack_x_licencja_mit_mapy_openstree, BuildConfig.VERSION_NAME),
                     color = Palette.TextFaint,
                     fontSize = 11.sp,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 18.dp),
@@ -308,7 +356,7 @@ fun SettingsScreen(vm: AppViewModel) {
     choice?.let { c ->
         @Suppress("UNCHECKED_CAST")
         val cc = c as Choice<Any?>
-        DarkDialog(cc.title, onDismiss = { choice = null }, buttons = { PillButton(tr("Zamknij"), primary = false) { choice = null } }) {
+        DarkDialog(cc.title, onDismiss = { choice = null }, buttons = { PillButton(tr(R.string.zamknij), primary = false) { choice = null } }) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 cc.options.forEach { (value, label) ->
                     val on = value == cc.selected
@@ -331,12 +379,37 @@ fun SettingsScreen(vm: AppViewModel) {
         }
     }
 
+    if (battery) BatteryGuideDialog { battery = false }
+    if (crashLog) CrashLogDialog(vm) { crashLog = false }
+    if (deleteOffline) {
+        DarkDialog(
+            tr(R.string.offline_delete_title),
+            onDismiss = { deleteOffline = false },
+            buttons = {
+                PillButton(tr(R.string.anuluj), primary = false) { deleteOffline = false }
+                PillButton(tr(R.string.crash_delete), danger = true) {
+                    deleteOffline = false
+                    OfflineMaps.deleteAll(context)
+                }
+            },
+        ) {
+            Text(trp(R.plurals.offline_areas, offlineAreas.size), color = Palette.TextDim, fontSize = 14.sp)
+        }
+    }
+
     if (showModes) {
-        DarkDialog(tr("Domyślny środek transportu"), onDismiss = { showModes = false }, buttons = { PillButton(tr("Zamknij"), primary = false) { showModes = false } }) {
+        DarkDialog(tr(R.string.domyslny_srodek_transportu), onDismiss = { showModes = false }, buttons = { PillButton(tr(R.string.zamknij), primary = false) { showModes = false } }) {
             ModeGrid(s.defaultMode) { m ->
                 vm.updateSettings { it.copy(defaultMode = m) }
                 showModes = false
             }
         }
     }
+}
+
+private fun hudColorName(c: HudColor): String = when (c) {
+    HudColor.WHITE -> tr(R.string.color_white)
+    HudColor.GREEN -> tr(R.string.color_green)
+    HudColor.AMBER -> tr(R.string.color_amber)
+    HudColor.CYAN -> tr(R.string.color_cyan)
 }
