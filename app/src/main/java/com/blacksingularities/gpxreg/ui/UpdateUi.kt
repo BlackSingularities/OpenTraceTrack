@@ -269,7 +269,7 @@ fun WhatsNewDialog(version: String, @Suppress("UNUSED_PARAMETER") notes: String,
         tr(R.string.zaktualizowano_do_x, version),
         onDismiss = onDismiss,
         icon = Icons.Rounded.NewReleases,
-        buttons = { PillButton(tr(R.string.super), onClick = onDismiss) },
+        buttons = { PillButton(tr(R.string.super_text), onClick = onDismiss) },
     ) {
         Text(tr(R.string.aplikacja_zostala_zaktualizowana), color = Palette.TextDim, fontSize = 14.sp)
     }

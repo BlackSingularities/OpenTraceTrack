@@ -1,4 +1,4 @@
-## 1.1.0
+## 1.1.1
 
 - Start nagrywania bez otwierania aplikacji: kafelek w szybkich ustawieniach, widżet na ekranie głównym i skróty na ikonie aplikacji.
 - „Jedź tą trasą”: wybrana trasa na mapie nagrywania, odchylenie od śladu, dystans do końca i wibracja po zjechaniu z trasy.

@@ -290,7 +290,7 @@
     <string name="aktualizuj_teraz">Aktualizuj teraz</string>
     <string name="pomin_te_wersje">Pomiń tę wersję</string>
     <string name="zaktualizowano_do_x">Zaktualizowano do {0}</string>
-    <string name="super">Super</string>
+    <string name="super_text">Super</string>
     <string name="aplikacja_zostala_zaktualizowana">Aplikacja została zaktualizowana.</string>
     <string name="serwer_aktualizacji_chwilowo_ogranicza_zapyt">Serwer aktualizacji chwilowo ogranicza zapytania – spróbuj za godzinę</string>
     <string name="serwer_odpowiedzial_kodem_x">Serwer odpowiedział kodem {0}</string>
