@@ -1,5 +1,13 @@
 # OpenTraceTrack
 
+<!-- posters:start -->
+<p align="center">
+  <img src="docs/posters/android.png" alt="OpenTraceTrack – Android" width="460">
+</p>
+
+<p align="center"><a href="https://redzikowski.com/portfolio/opentracetrack">redzikowski.com/portfolio/opentracetrack</a></p>
+<!-- posters:end -->
+
 <p align="center">
   <img src="artwork/open-trace-track-mark.png" alt="OpenTraceTrack" width="176" />
 </p>

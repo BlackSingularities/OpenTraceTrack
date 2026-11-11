@@ -1,0 +1,23 @@
+{
+  "slug": "opentracetrack",
+  "name": "OpenTraceTrack",
+  "label": "prędkościomierz z HUD-em · rejestrator tras",
+  "icon": "icon.png",
+  "url": "https://redzikowski.com/portfolio/opentracetrack",
+  "posters": [
+    {
+      "platform": "android",
+      "file": "android.png",
+      "title": "Każda trasa, *każdym środkiem*",
+      "lead": "Prędkościomierz z lotniczym HUD-em i rejestrator, który dzieli przejazd na rower, tramwaj, pociąg i 11 innych środków transportu.",
+      "shots": [
+        { "src": "../screenshots/android/01-nagrywanie.png", "caption": "HUD" },
+        { "src": "../screenshots/android/02-przesiadka.png", "caption": "Przesiadki" },
+        { "src": "../screenshots/android/03-trasy.png", "caption": "Trasy" },
+        { "src": "../screenshots/android/04-statystyki.png", "caption": "Statystyki" }
+      ],
+      "features": ["lotniczy HUD", "odbicie na szybie", "14 środków transportu", "mapa cieplna tras", "eksport GPX, KML, CSV", "import GPX"],
+      "meta": "Android 10 lub nowszy"
+    }
+  ]
+}
