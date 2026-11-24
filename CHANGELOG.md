@@ -1,7 +1,7 @@
 ## 1.2.2
 
-- Fixed a crash when starting a recording on Android 10 and 11 (the background-service notification used a feature that only exists in Android 12+).
-- Minor code fixes reported by lint.
+- Naprawione zamykanie się aplikacji przy starcie nagrywania na Androidzie 10 i 11 (powiadomienie usługi w tle korzystało z funkcji dostępnej dopiero od Androida 12).
+- Drobne poprawki kodu wskazane przez lint.
 
 ## 1.2.1
 
