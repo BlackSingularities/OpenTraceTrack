@@ -36,6 +36,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -225,7 +226,7 @@ fun UpdateSheet(vm: AppViewModel) {
                         }
                         UpdateState.UpToDate, UpdateState.Idle -> PillButton(tr(R.string.sprawdz_ponownie), Modifier.fillMaxWidth(), primary = false) { vm.checkUpdate() }
                         else -> {
-                            val recording = Recorder.state.value.active
+                            val recording = Recorder.state.collectAsState().value.active
                             Text(
                                 when {
                                     recording -> tr(R.string.trwa_nagrywanie_plik_mozesz_pobrac_teraz)

@@ -24,7 +24,7 @@ object TrackImporter {
         if (head.size >= 12 && head[8] == '.'.code.toByte() && head[9] == 'F'.code.toByte() && head[10] == 'I'.code.toByte() && head[11] == 'T'.code.toByte()) {
             return ImportFormat.FIT
         }
-        val text = String(head, Charsets.UTF_8).trimStart('﻿', ' ', '\n', '\r', '\t')
+        val text = String(head, Charsets.UTF_8).trimStart('\uFEFF', ' ', '\n', '\r', '\t')
         return when {
             text.startsWith("{") || text.startsWith("[") -> ImportFormat.GEOJSON
             text.contains("<kml", ignoreCase = true) -> ImportFormat.KML

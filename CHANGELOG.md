@@ -1,3 +1,8 @@
+## 1.2.2
+
+- Fixed a crash when starting a recording on Android 10 and 11 (the background-service notification used a feature that only exists in Android 12+).
+- Minor code fixes reported by lint.
+
 ## 1.2.1
 
 - Ikona aplikacji bez tła: na ekranie głównym widać sam kolorowy emblemat, spójnie z trybem „Bez tła” w OpenDesktop.

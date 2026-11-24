@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.IBinder
 import com.blacksingularities.gpxreg.GpxRegApp
 import com.blacksingularities.gpxreg.MainActivity
@@ -158,7 +159,11 @@ class RecordingService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setCategory(Notification.CATEGORY_SERVICE)
-            .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
+        // Android 12+ opóźnia powiadomienia usług pierwszoplanowych o ~10 s – tu chcemy je od razu.
+        // Na starszych systemach metody nie ma (NoSuchMethodError), a powiadomienie i tak jest natychmiastowe.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            b.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
+        }
         if (s.status == RecStatus.PAUSED) {
             b.addAction(action(ACTION_RESUME, tr(R.string.wznow)))
         } else if (s.active) {
